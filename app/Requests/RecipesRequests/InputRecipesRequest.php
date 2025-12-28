@@ -22,7 +22,7 @@ class InputRecipesRequest implements RequestInterface
             $errors['files'] = 'No files uploaded';
         } else {
             $validFiles = [];
-            
+
             foreach ($uploadedFiles as $key => $file) {
                 if (is_array($file)) {
                     foreach ($file as $subFile) {
@@ -62,7 +62,7 @@ class InputRecipesRequest implements RequestInterface
     private function validateFile(UploadedFileInterface $file): ?string
     {
         if ($file->getError() !== UPLOAD_ERR_OK) {
-            return 'File upload error: ' . $this->getUploadErrorMessage($file->getError());
+            return 'File upload error: '.$this->getUploadErrorMessage($file->getError());
         }
 
         $clientFilename = $file->getClientFilename();
@@ -72,7 +72,7 @@ class InputRecipesRequest implements RequestInterface
 
         $extension = strtolower(pathinfo($clientFilename, PATHINFO_EXTENSION));
         $allowedExtensions = ['xlsx', 'xls'];
-        
+
         if (! in_array($extension, $allowedExtensions)) {
             return 'Invalid file type. Only Excel files (.xlsx, .xls) are allowed';
         }
@@ -102,7 +102,7 @@ class InputRecipesRequest implements RequestInterface
     private function normalizeFiles(array $uploadedFiles): array
     {
         $normalized = [];
-        
+
         foreach ($uploadedFiles as $key => $file) {
             if (is_array($file)) {
                 $normalized[$key] = [];
@@ -119,4 +119,3 @@ class InputRecipesRequest implements RequestInterface
         return $normalized;
     }
 }
-

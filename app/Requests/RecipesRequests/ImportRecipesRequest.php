@@ -24,10 +24,11 @@ class InputRecipesRequest implements RequestInterface
 
             if ($file->getError() !== UPLOAD_ERR_OK) {
                 $errors[$key]['upload'] = 'File upload failed.';
+
                 continue;
             }
 
-            if (!in_array($file->getClientMediaType(), $allowedMimeTypes)) {
+            if (! in_array($file->getClientMediaType(), $allowedMimeTypes)) {
                 $errors[$key]['format'] = 'Invalid file format. Only CSV or XLSX files are allowed.';
             }
 
@@ -36,12 +37,12 @@ class InputRecipesRequest implements RequestInterface
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw new ValidationException($errors);
         }
 
         return [
-            'files' => $files
+            'files' => $files,
         ];
     }
 }

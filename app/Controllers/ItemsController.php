@@ -27,14 +27,31 @@ class ItemsController extends BaseController
             });
         }
 
-        $items = $this->paginate($query, $page, $perPage, 'name');
+        $items = $this->Paginate($query, $page, $perPage, 'name');
 
-        return jsonResponse($response, [
-            'success' => true,
-            'data' => $items['date'],
+        // Check if this is an AJAX request
+        if (isAjaxRequest($request)) {
+            // AJAX request → return JSON
+            return jsonResponse($response, [
+                'success' => true,
+                'data' => $items['data'],
+                'pagination' => $items['pagination'],
+                'search' => $search,
+            ]);
+        }
+
+        $html = view('items.index', [
+            'title' => 'Manager Items',
+            'currentPage' => 'items',
+            'items' => $items['data'],
             'pagination' => $items['pagination'],
             'search' => $search,
+            'scripts' => '<script src="'.asset('js/items.js').'"></script>',
         ]);
+
+        $response->getBody()->write($html);
+
+        return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
     }
 
     public function show(Request $request, Response $response, array $args): Response

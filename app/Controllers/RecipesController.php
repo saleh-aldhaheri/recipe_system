@@ -30,12 +30,30 @@ class RecipesController extends BaseController
 
         $recipes = $this->Paginate($query, $page, $perPage, 'name');
 
-        return jsonResponse($response, [
-            'success' => true,
-            'data' => $recipes['data'],
+        // Check if this is an AJAX request
+        if (isAjaxRequest($request)) {
+            // AJAX request → return JSON
+            return jsonResponse($response, [
+                'success' => true,
+                'data' => $recipes['data'],
+                'pagination' => $recipes['pagination'],
+                'search' => $search,
+            ]);
+        }
+
+        // Normal request → return View (HTML)
+        $html = view('recipes.calendar', [
+            'title' => 'Recipes Calendar',
+            'currentPage' => 'recipes',
+            'recipes' => $recipes['data'],
             'pagination' => $recipes['pagination'],
             'search' => $search,
+            'scripts' => '<script src="'.asset('js/recipes.js').'"></script>',
         ]);
+
+        $response->getBody()->write($html);
+
+        return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
     }
 
     public function show(Request $request, Response $response, array $args): Response
@@ -45,6 +63,7 @@ class RecipesController extends BaseController
 
         $recipe = Recipe::with('ingredients.item')->findOrFail($id);
 
+        // Show operations typically use AJAX, return JSON
         return jsonResponse($response, [
             'success' => true,
             'data' => $recipe,
@@ -130,9 +149,10 @@ class RecipesController extends BaseController
         $validated = (new InputRecipesRequest)->validate($request);
 
         $files = $validated['files'];
-        
-        $result = (new ImportRecipeService())->processFile($files);
 
+        $result = (new ImportRecipeService)->processFiles($files);
+
+        // Import always returns JSON (used via AJAX)
         return jsonResponse($response, [
             'success' => true,
             'message' => 'Import completed',

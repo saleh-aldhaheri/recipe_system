@@ -8,10 +8,18 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Routing\RouteCollectorProxy;
 
+// Home page route
 $app->get('/', function (Request $request, Response $response) {
-    $response->getBody()->write('welcome');
+    require_once Core.'helper.php';
 
-    return $response;
+    $html = view('home.index', [
+        'title' => 'Recipe Management System',
+        'currentPage' => 'home',
+    ]);
+
+    $response->getBody()->write($html);
+
+    return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
 });
 
 // Items routes
@@ -32,7 +40,7 @@ $app->group('/recipe', function (RouteCollectorProxy $group) {
     $group->put('/{id}', [RecipesController::class, 'update']);
     $group->patch('/{id}', [RecipesController::class, 'update']);
     $group->delete('/{id}', [RecipesController::class, 'destroy']);
-    $group->post('/import', [RecipesController::class, 'import'])->add(new ImportMiddleware()); 
+    $group->post('/import', [RecipesController::class, 'import'])->add(new ImportMiddleware);
 });
 
 // Ingredients routes

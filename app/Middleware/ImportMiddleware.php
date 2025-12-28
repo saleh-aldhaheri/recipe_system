@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Middleware;
 
@@ -9,20 +9,20 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Exception\HttpBadRequestException;
 
-class ImportMiddleware implements  MiddlewareInterface 
-{ 
+class ImportMiddleware implements MiddlewareInterface
+{
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $files = $request->getUploadedFiles();  
+        $files = $request->getUploadedFiles();
 
-        if(empty($files)){ 
-          throw new HttpBadRequestException($request); 
-        } 
-
-        if(count($files) > 7) { 
-          throw new ValidationException(['limit' => 'exceeded the allowed limit']); 
+        if (empty($files)) {
+            throw new HttpBadRequestException($request);
         }
 
-        return $handler->handle($request); 
+        if (count($files) > 7) {
+            throw new ValidationException(['limit' => 'exceeded the allowed limit']);
+        }
+
+        return $handler->handle($request);
     }
 }

@@ -31,11 +31,25 @@ class IngredientsController extends BaseController
 
         $ingredients = $this->Paginate($query, $page, $perPage, 'id');
 
-        return jsonResponse($response, [
-            'success' => true,
-            'data' => $ingredients['data'],
+        if (isAjaxRequest($request)) {
+            return jsonResponse($response, [
+                'success' => true,
+                'data' => $ingredients['data'],
+                'pagination' => $ingredients['pagination'],
+            ]);
+        }
+
+        $html = view('ingredients.index', [
+            'title' => 'Manage Ingredients',
+            'currentPage' => 'ingredients',
+            'ingredients' => $ingredients['data'],
             'pagination' => $ingredients['pagination'],
+            'scripts' => '<script src="'.asset('js/ingredients.js').'"></script>',
         ]);
+
+        $response->getBody()->write($html);
+
+        return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
     }
 
     public function show(Request $request, Response $response, array $args): Response

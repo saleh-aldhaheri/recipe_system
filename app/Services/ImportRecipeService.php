@@ -12,8 +12,8 @@ class ImportRecipeService
 {
     /**
      * Process multiple uploaded files
-     * 
-     * @param array $files Normalized uploaded files
+     *
+     * @param  array  $files  Normalized uploaded files
      * @return array ['results' => array, 'failed_ingredients' => array]
      */
     public function processFiles(array $files): array
@@ -40,7 +40,7 @@ class ImportRecipeService
             } elseif ($file instanceof UploadedFileInterface) {
                 $result = $this->processFile($file);
                 $results[] = $result;
-                if (!empty($result['failed_ingredients'])) {
+                if (! empty($result['failed_ingredients'])) {
                     $allFailedIngredients = array_merge($allFailedIngredients, $result['failed_ingredients']);
                 }
             }
@@ -49,15 +49,12 @@ class ImportRecipeService
 
     /**
      * Process a single Excel file
-     * 
-     * @param UploadedFileInterface $file
-     * @return array
      */
     public function processFile(UploadedFileInterface $file): array
     {
         try {
             $extractedData = $this->extractData($file);
-            
+
             $date = $extractedData['date'] ?? '';
             $product = $extractedData['product'] ?? '';
             $items = $extractedData['items'] ?? [];
@@ -157,14 +154,13 @@ class ImportRecipeService
 
     /**
      * Extract data from Excel file
-     * 
-     * @param UploadedFileInterface $file
+     *
      * @return array ['date' => string, 'product' => string, 'items' => array]
      */
     public function extractData(UploadedFileInterface $file): array
     {
         $tempPath = $this->saveTemporaryFile($file);
-        
+
         try {
             $sheet = IOFactory::load($tempPath);
             $worksheet = $sheet->getActiveSheet();
@@ -185,6 +181,7 @@ class ImportRecipeService
                 if (str_contains($rowString, 'DATE:')) {
                     if (empty($getDateRow)) {
                         $getDateRow = $dataArray[$i];
+
                         continue;
                     }
                 }
@@ -192,6 +189,7 @@ class ImportRecipeService
                 if (str_contains($rowString, 'PRODUCT:')) {
                     if (empty($getProduceRow)) {
                         $getProduceRow = $dataArray[$i];
+
                         continue;
                     }
                 }
@@ -257,6 +255,7 @@ class ImportRecipeService
                                 if (! empty($tableData['items'])) {
                                     break;
                                 }
+
                                 continue;
                             }
 
@@ -326,17 +325,17 @@ class ImportRecipeService
      */
     private function saveTemporaryFile(UploadedFileInterface $file): string
     {
-        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('excel_', true) . '.xlsx';
-        
+        $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.uniqid('excel_', true).'.xlsx';
+
         $stream = $file->getStream();
         $handle = fopen($tempPath, 'w');
-        
+
         while (! $stream->eof()) {
             fwrite($handle, $stream->read(8192));
         }
-        
+
         fclose($handle);
-        
+
         return $tempPath;
     }
 }
