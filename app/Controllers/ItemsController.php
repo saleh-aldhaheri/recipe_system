@@ -29,9 +29,7 @@ class ItemsController extends BaseController
 
         $items = $this->Paginate($query, $page, $perPage, 'name');
 
-        // Check if this is an AJAX request
         if (isAjaxRequest($request)) {
-            // AJAX request → return JSON
             return jsonResponse($response, [
                 'success' => true,
                 'data' => $items['data'],

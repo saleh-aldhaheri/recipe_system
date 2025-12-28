@@ -33,7 +33,7 @@ $app->group('/items', function (RouteCollectorProxy $group) {
 });
 
 // Recipe routes
-$app->group('/recipe', function (RouteCollectorProxy $group) {
+$app->group('/recipes', function (RouteCollectorProxy $group) {
     $group->get('', [RecipesController::class, 'index']);
     $group->post('', [RecipesController::class, 'store']);
     $group->get('/{id}', [RecipesController::class, 'show']);

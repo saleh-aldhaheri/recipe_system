@@ -9,19 +9,19 @@
     <div class="feature-card">
         <h3>📦 Manage Items</h3>
         <p>Create, update, and manage your inventory items. Track balances and units for each item.</p>
-        <a href="<?= url('/items') ?>" class="btn btn-primary">Go to Items</a>
+        <a href="<?= url('items') ?>" class="btn btn-primary">Go to Items</a>
     </div>
 
     <div class="feature-card">
         <h3>📅 Recipes Calendar</h3>
         <p>View recipes in a calendar format. Click on any day to manage recipes and import from Excel files.</p>
-        <a href="<?= url('/recipes') ?>" class="btn btn-primary">Go to Calendar</a>
+        <a href="<?= url('recipes') ?>" class="btn btn-primary">Go to Calendar</a>
     </div>
 
     <div class="feature-card">
         <h3>🥘 Manage Ingredients</h3>
         <p>Create and manage recipe ingredients. Automatically track item balances when ingredients are used.</p>
-        <a href="<?= url('/ingredients') ?>" class="btn btn-primary">Go to Ingredients</a>
+        <a href="<?= url('ingredients') ?>" class="btn btn-primary">Go to Ingredients</a>
     </div>
 </div>
 

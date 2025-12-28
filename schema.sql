@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `items` (
     KEY `idx_short_name` (`short_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `recipe` (
+CREATE TABLE IF NOT EXISTS `recipes` (
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
     `day` DATE NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `ingredients` (
     KEY `idx_item_id` (`item_id`),
     CONSTRAINT `fk_ingredients_recipe`
         FOREIGN KEY (`recipe_id`)
-        REFERENCES `recipe` (`id`)
+        REFERENCES `recipes` (`id`)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     CONSTRAINT `fk_ingredients_item`

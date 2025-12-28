@@ -11,10 +11,10 @@
     <!-- Navigation -->
     <nav>
         <ul>
-            <li><a href="<?= url('/') ?>" <?= isset($currentPage) && $currentPage === 'home' ? 'class="active"' : '' ?>>Home</a></li>
-            <li><a href="<?= url('/items') ?>" <?= isset($currentPage) && $currentPage === 'items' ? 'class="active"' : '' ?>>Manage Items</a></li>
-            <li><a href="<?= url('/recipes') ?>" <?= isset($currentPage) && $currentPage === 'recipes' ? 'class="active"' : '' ?>>Recipes Calendar</a></li>
-            <li><a href="<?= url('/ingredients') ?>" <?= isset($currentPage) && $currentPage === 'ingredients' ? 'class="active"' : '' ?>>Manage Ingredients</a></li>
+            <li><a href="<?= url('') ?>" <?= isset($currentPage) && $currentPage === 'home' ? 'class="active"' : '' ?>>Home</a></li>
+            <li><a href="<?= url('items') ?>" <?= isset($currentPage) && $currentPage === 'items' ? 'class="active"' : '' ?>>Manage Items</a></li>
+            <li><a href="<?= url('recipes') ?>" <?= isset($currentPage) && $currentPage === 'recipes' ? 'class="active"' : '' ?>>Recipes Calendar</a></li>
+            <li><a href="<?= url('ingredients') ?>" <?= isset($currentPage) && $currentPage === 'ingredients' ? 'class="active"' : '' ?>>Manage Ingredients</a></li>
         </ul>
     </nav>
 
