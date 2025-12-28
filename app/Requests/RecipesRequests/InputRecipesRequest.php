@@ -9,45 +9,38 @@ use Psr\Http\Message\UploadedFileInterface;
 
 class InputRecipesRequest implements RequestInterface
 {
-    public function validate(ServerRequestInterface|array $request): array
+    public function validate(ServerRequestInterface $request): array
     {
-        if (! $request instanceof ServerRequestInterface) {
-            throw new ValidationException(['files' => 'Invalid request']);
-        }
 
         $uploadedFiles = $request->getUploadedFiles();
         $errors = [];
 
-        if (empty($uploadedFiles)) {
-            $errors['files'] = 'No files uploaded';
-        } else {
-            $validFiles = [];
+        $validFiles = [];
 
-            foreach ($uploadedFiles as $key => $file) {
-                if (is_array($file)) {
-                    foreach ($file as $subFile) {
-                        if ($subFile instanceof UploadedFileInterface) {
-                            $fileError = $this->validateFile($subFile);
-                            if ($fileError) {
-                                $errors['files'][$key][] = $fileError;
-                            } else {
-                                $validFiles[] = $subFile;
-                            }
+        foreach ($uploadedFiles as $key => $file) {
+            if (is_array($file)) {
+                foreach ($file as $subFile) {
+                    if ($subFile instanceof UploadedFileInterface) {
+                        $fileError = $this->validateFile($subFile);
+                        if ($fileError) {
+                            $errors['files'][$key][] = $fileError;
+                        } else {
+                            $validFiles[] = $subFile;
                         }
                     }
-                } elseif ($file instanceof UploadedFileInterface) {
-                    $fileError = $this->validateFile($file);
-                    if ($fileError) {
-                        $errors['files'][$key] = $fileError;
-                    } else {
-                        $validFiles[] = $file;
-                    }
+                }
+            } elseif ($file instanceof UploadedFileInterface) {
+                $fileError = $this->validateFile($file);
+                if ($fileError) {
+                    $errors['files'][$key] = $fileError;
+                } else {
+                    $validFiles[] = $file;
                 }
             }
+        }
 
-            if (empty($validFiles)) {
-                $errors['files'] = 'No valid files uploaded';
-            }
+        if (empty($validFiles)) {
+            $errors['files'] = 'No valid files uploaded';
         }
 
         if (! empty($errors)) {

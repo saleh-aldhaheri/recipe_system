@@ -6,5 +6,5 @@ use Psr\Http\Message\ServerRequestInterface;
 
 interface RequestInterface
 {
-    public function validate(ServerRequestInterface|array $request): array;
+    public function validate(ServerRequestInterface $request): array;
 }

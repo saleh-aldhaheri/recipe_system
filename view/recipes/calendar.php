@@ -8,9 +8,9 @@
 
 <!-- Calendar Navigation -->
 <div class="calendar-nav">
-    <button class="btn btn-secondary" onclick="previousMonth()">← Previous Month</button>
+    <button class="btn btn-secondary" onclick="previousWeek()">← Previous Week</button>
     <h2 id="currentMonthYear"></h2>
-    <button class="btn btn-secondary" onclick="nextMonth()">Next Month →</button>
+    <button class="btn btn-secondary" onclick="nextWeek()">Next Week →</button>
 </div>
 
 <!-- Calendar -->
@@ -62,6 +62,7 @@
             <div class="form-group">
                 <label for="recipeDateInput">Date *</label>
                 <input type="date" id="recipeDateInput" required>
+                <small style="color: #7f8c8d; display: block; margin-top: 0.25rem;">Date is locked when selected from calendar</small>
             </div>
 
             <!-- Ingredients Section -->

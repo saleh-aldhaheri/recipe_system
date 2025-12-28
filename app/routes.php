@@ -8,7 +8,6 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Routing\RouteCollectorProxy;
 
-// Home page route
 $app->get('/', function (Request $request, Response $response) {
     require_once Core.'helper.php';
 
@@ -22,7 +21,6 @@ $app->get('/', function (Request $request, Response $response) {
     return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
 });
 
-// Items routes
 $app->group('/items', function (RouteCollectorProxy $group) {
     $group->get('', [ItemsController::class, 'index']);
     $group->post('', [ItemsController::class, 'store']);
@@ -32,7 +30,6 @@ $app->group('/items', function (RouteCollectorProxy $group) {
     $group->delete('/{id}', [ItemsController::class, 'destroy']);
 });
 
-// Recipe routes
 $app->group('/recipes', function (RouteCollectorProxy $group) {
     $group->get('', [RecipesController::class, 'index']);
     $group->post('', [RecipesController::class, 'store']);
@@ -43,7 +40,6 @@ $app->group('/recipes', function (RouteCollectorProxy $group) {
     $group->post('/import', [RecipesController::class, 'import'])->add(new ImportMiddleware);
 });
 
-// Ingredients routes
 $app->group('/ingredients', function (RouteCollectorProxy $group) {
     $group->get('', [IngredientsController::class, 'index']);
     $group->post('', [IngredientsController::class, 'store']);

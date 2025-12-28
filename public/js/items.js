@@ -78,7 +78,7 @@ function displayItems(items) {
     if (items.length === 0) {
         document.getElementById('itemsTableContainer').innerHTML = `
             <div class="text-center" style="padding: 2rem;">
-                <p>لا توجد عناصر</p>
+                <p>No items found</p>
             </div>
         `;
         return;
@@ -90,12 +90,12 @@ function displayItems(items) {
             <table>
                 <thead>
                     <tr>
-                        <th>المعرف</th>
-                        <th>الاسم المختصر</th>
-                        <th>الاسم</th>
-                        <th>الرصيد</th>
-                        <th>الوحدة</th>
-                        <th>الإجراءات</th>
+                        <th>ID</th>
+                        <th>Short Name</th>
+                        <th>Name</th>
+                        <th>Balance</th>
+                        <th>Unit</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,8 +111,8 @@ function displayItems(items) {
                 <td>${item.balance}</td>
                 <td>${item.unit}</td>
                 <td>
-                    <button class="btn btn-primary btn-small" onclick="editItem(${item.id})">تعديل</button>
-                    <button class="btn btn-danger btn-small" onclick="deleteItem(${item.id})">حذف</button>
+                    <button class="btn btn-primary btn-small" onclick="editItem(${item.id})">Edit</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteItem(${item.id})">Delete</button>
                 </td>
             </tr>
         `;

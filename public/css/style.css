@@ -331,11 +331,54 @@ tbody tr:hover {
     background-color: #d5f4e6;
 }
 
+.calendar-day-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.calendar-day-header .day-name {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.calendar-day-header .day-number {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: #2c3e50;
+}
+
 .calendar-day-number {
     font-weight: bold;
     font-size: 1.2rem;
     margin-bottom: 0.5rem;
     color: #2c3e50;
+}
+
+.calendar-day.today {
+    border-color: #3498db;
+    background-color: #ebf5fb;
+}
+
+.calendar-day.today .calendar-day-header .day-number {
+    color: #3498db;
+}
+
+.recipe-badge {
+    background: #27ae60;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    margin: 0.25rem 0;
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .calendar-day-recipes {

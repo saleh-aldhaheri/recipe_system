@@ -1,82 +1,123 @@
 /**
- * Recipes Calendar Page
- * This file handles calendar display and recipe CRUD operations using AJAX
+ * Recipes Calendar Page - Weekly View
+ * This file handles weekly calendar display and recipe CRUD operations using AJAX
  */
 
-// Current month and year
-let currentDate = new Date();
+// Current week start date (Monday)
+let currentWeekStart = getMonday(new Date());
 let selectedDay = null;
-let allRecipes = []; // Cache all recipes for the current month
+let allRecipes = []; // Cache all recipes
 let ingredientCounter = 0; // Counter for ingredient rows
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     renderCalendar();
-    loadRecipesForMonth();
+    loadRecipes();
+    
+    // Add click event listener to close modal when clicking outside
+    const recipeModal = document.getElementById('recipeModal');
+    if (recipeModal) {
+        recipeModal.addEventListener('click', function(event) {
+            if (event.target === recipeModal) {
+                closeRecipeModal();
+            }
+        });
+    }
+    
+    // Add click event listener to recipe form modal
+    const recipeFormModal = document.getElementById('recipeFormModal');
+    if (recipeFormModal) {
+        recipeFormModal.addEventListener('click', function(event) {
+            if (event.target === recipeFormModal) {
+                closeRecipeFormModal();
+            }
+        });
+    }
 });
 
 /**
- * Render calendar for current month
+ * Get Monday of the week for a given date
+ */
+function getMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    return new Date(d.setDate(diff));
+}
+
+/**
+ * Render weekly calendar
  */
 function renderCalendar() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const weekStart = new Date(currentWeekStart);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
 
-    // Update month/year display
+    // Update week display
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'];
-    document.getElementById('currentMonthYear').textContent = `${monthNames[month]} ${year}`;
-
-    // Get first day of month and number of days
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const startMonth = monthNames[weekStart.getMonth()];
+    const endMonth = monthNames[weekEnd.getMonth()];
+    
+    let weekText = `${startMonth} ${weekStart.getDate()}`;
+    if (weekStart.getMonth() !== weekEnd.getMonth() || weekStart.getFullYear() !== weekEnd.getFullYear()) {
+        weekText += ` - ${endMonth} ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`;
+    } else {
+        weekText += ` - ${weekEnd.getDate()}, ${weekStart.getFullYear()}`;
+    }
+    
+    document.getElementById('currentMonthYear').textContent = weekText;
 
     // Clear calendar
     const calendar = document.getElementById('calendar');
     calendar.innerHTML = '';
 
-    // Add empty cells for days before month starts
-    for (let i = 0; i < firstDay; i++) {
-        const emptyDay = document.createElement('div');
-        emptyDay.className = 'calendar-day';
-        calendar.appendChild(emptyDay);
-    }
-
-    // Add days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
+    // Add days of the week (Monday to Sunday)
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    
+    for (let i = 0; i < 7; i++) {
+        const dayDate = new Date(weekStart);
+        dayDate.setDate(dayDate.getDate() + i);
+        
         const dayElement = document.createElement('div');
         dayElement.className = 'calendar-day';
-        dayElement.onclick = () => openDayRecipes(year, month, day);
+        
+        // Add today class
+        const today = new Date();
+        if (dayDate.toDateString() === today.toDateString()) {
+            dayElement.classList.add('today');
+        }
+        
+        // Click handler
+        dayElement.onclick = () => openDayRecipes(dayDate);
 
-        const dayNumber = document.createElement('div');
-        dayNumber.className = 'calendar-day-number';
-        dayNumber.textContent = day;
-        dayElement.appendChild(dayNumber);
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'calendar-day-header';
+        dayHeader.innerHTML = `
+            <div class="day-name">${dayNames[i]}</div>
+            <div class="day-number">${dayDate.getDate()}</div>
+        `;
+        dayElement.appendChild(dayHeader);
 
         const recipesContainer = document.createElement('div');
         recipesContainer.className = 'calendar-day-recipes';
-        recipesContainer.id = `recipes-${year}-${month}-${day}`;
+        recipesContainer.id = `recipes-${dayDate.toISOString().split('T')[0]}`;
         dayElement.appendChild(recipesContainer);
 
         calendar.appendChild(dayElement);
     }
 
-    // Update recipes display for each day
+    // Update recipes display
     updateCalendarRecipes();
 }
 
 /**
- * Load all recipes for the current month
+ * Load all recipes
  */
-async function loadRecipesForMonth() {
+async function loadRecipes() {
     try {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
-
-        // Get all recipes (we'll filter by month on client side)
-        // In a real app, you might want to add date filtering to the API
-        const response = await apiGet('/recipe', {
-            per_page: 1000 // Get many recipes
+        const response = await apiGet('/recipes', {
+            per_page: 1000
         });
 
         if (response.success) {
@@ -92,65 +133,63 @@ async function loadRecipesForMonth() {
  * Update calendar to show recipes for each day
  */
 function updateCalendarRecipes() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-
-    // Clear all recipe displays
-    for (let day = 1; day <= 31; day++) {
-        const container = document.getElementById(`recipes-${year}-${month}-${day}`);
-        if (container) {
-            container.innerHTML = '';
+    const weekStart = new Date(currentWeekStart);
+    
+    for (let i = 0; i < 7; i++) {
+        const dayDate = new Date(weekStart);
+        dayDate.setDate(dayDate.getDate() + i);
+        const dateString = dayDate.toISOString().split('T')[0];
+        
+        const container = document.getElementById(`recipes-${dateString}`);
+        if (!container) continue;
+        
+        // Find recipes for this day
+        const dayRecipes = allRecipes.filter(recipe => {
+            const recipeDate = new Date(recipe.date);
+            return recipeDate.toISOString().split('T')[0] === dateString;
+        });
+        
+        container.innerHTML = '';
+        
+        if (dayRecipes.length > 0) {
+            dayRecipes.forEach(recipe => {
+                const recipeBadge = document.createElement('div');
+                recipeBadge.className = 'recipe-badge';
+                recipeBadge.textContent = recipe.name;
+                recipeBadge.title = recipe.name;
+                container.appendChild(recipeBadge);
+            });
         }
     }
-
-    // Display recipes for each day
-    allRecipes.forEach(recipe => {
-        const recipeDate = new Date(recipe.date);
-        if (recipeDate.getFullYear() === year && recipeDate.getMonth() === month) {
-            const day = recipeDate.getDate();
-            const container = document.getElementById(`recipes-${year}-${month}-${day}`);
-            
-            if (container) {
-                const recipeItem = document.createElement('div');
-                recipeItem.className = 'recipe-item';
-                recipeItem.textContent = recipe.name;
-                container.appendChild(recipeItem);
-
-                // Mark day as having recipes
-                const dayElement = container.parentElement;
-                dayElement.classList.add('has-recipes');
-            }
-        }
-    });
 }
 
 /**
- * Navigate to previous month
+ * Navigate to previous week
  */
-function previousMonth() {
-    currentDate.setMonth(currentDate.getMonth() - 1);
+function previousWeek() {
+    currentWeekStart = new Date(currentWeekStart);
+    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
     renderCalendar();
-    loadRecipesForMonth();
+    loadRecipes();
 }
 
 /**
- * Navigate to next month
+ * Navigate to next week
  */
-function nextMonth() {
-    currentDate.setMonth(currentDate.getMonth() + 1);
+function nextWeek() {
+    currentWeekStart = new Date(currentWeekStart);
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
     renderCalendar();
-    loadRecipesForMonth();
+    loadRecipes();
 }
 
 /**
  * Open recipes for a specific day
- * @param {number} year
- * @param {number} month
- * @param {number} day
+ * @param {Date} dayDate
  */
-async function openDayRecipes(year, month, day) {
-    selectedDay = { year, month, day };
-    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+async function openDayRecipes(dayDate) {
+    selectedDay = dayDate;
+    const dateString = dayDate.toISOString().split('T')[0];
     
     document.getElementById('selectedDate').textContent = dateString;
     document.getElementById('recipeModalTitle').textContent = `Recipes for ${dateString}`;
@@ -164,8 +203,7 @@ async function openDayRecipes(year, month, day) {
 
     try {
         // Load recipes for this day
-        // In MVC mode: use recipes.php, in API mode: use /recipe
-        const response = await apiGet('/recipe', {
+        const response = await apiGet('/recipes', {
             per_page: 1000
         });
 
@@ -203,22 +241,28 @@ function displayDayRecipes(recipes, dateString) {
     if (recipes.length === 0) {
         html += '<p>No recipes for this day. Click "Add New Recipe" to create one.</p>';
     } else {
-        html += '<div style="display: flex; flex-direction: column; gap: 1rem;">';
-        
-        recipes.forEach(recipe => {
-            html += `
-                <div class="card">
-                    <h3>${recipe.name}</h3>
-                    <p style="color: #7f8c8d; margin: 0.5rem 0;">Date: ${recipe.date}</p>
-                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                        <button class="btn btn-primary btn-small" onclick="editRecipe(${recipe.id})">Edit</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteRecipe(${recipe.id})">Delete</button>
+        // Since only one recipe per date is allowed, show the recipe
+        const recipe = recipes[0];
+        html += `
+            <div class="card">
+                <h3>${recipe.name}</h3>
+                <p style="color: #7f8c8d; margin: 0.5rem 0;">Date: ${recipe.date}</p>
+                ${recipe.ingredients && recipe.ingredients.length > 0 ? `
+                    <div style="margin-top: 1rem;">
+                        <strong>Ingredients:</strong>
+                        <ul style="margin-top: 0.5rem;">
+                            ${recipe.ingredients.map(ing => 
+                                `<li>${ing.item ? ing.item.name : 'N/A'} - ${ing.quantity}</li>`
+                            ).join('')}
+                        </ul>
                     </div>
+                ` : ''}
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                    <button class="btn btn-primary btn-small" onclick="editRecipe(${recipe.id})">Edit</button>
+                    <button class="btn btn-danger btn-small" onclick="deleteRecipe(${recipe.id})">Delete</button>
                 </div>
-            `;
-        });
-        
-        html += '</div>';
+            </div>
+        `;
     }
 
     document.getElementById('recipeModalBody').innerHTML = html;
@@ -228,8 +272,13 @@ function displayDayRecipes(recipes, dateString) {
  * Close recipe modal
  */
 function closeRecipeModal() {
-    document.getElementById('recipeModal').style.display = 'none';
-    loadRecipesForMonth(); // Refresh calendar
+    const modal = document.getElementById('recipeModal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Clear modal body to prevent stale content
+        document.getElementById('recipeModalBody').innerHTML = '';
+    }
+    loadRecipes(); // Refresh calendar
 }
 
 /**
@@ -242,11 +291,14 @@ function openRecipeForm(dateString) {
     document.getElementById('recipeFormTitle').textContent = 'Add New Recipe';
     document.getElementById('recipeId').value = '';
     document.getElementById('recipeDate').value = dateString;
-    document.getElementById('recipeDateInput').value = dateString;
+    const dateInput = document.getElementById('recipeDateInput');
+    dateInput.value = dateString;
+    dateInput.readOnly = true; // Make date readonly when clicked from calendar
     document.getElementById('recipeName').value = '';
     document.getElementById('ingredientsList').innerHTML = '';
     ingredientCounter = 0;
     
+    addIngredientRow(); // Add one empty ingredient row
     document.getElementById('recipeFormModal').style.display = 'block';
 }
 
@@ -254,10 +306,18 @@ function openRecipeForm(dateString) {
  * Close recipe form modal
  */
 function closeRecipeFormModal() {
-    document.getElementById('recipeFormModal').style.display = 'none';
-    document.getElementById('recipeForm').reset();
-    document.getElementById('ingredientsList').innerHTML = '';
-    ingredientCounter = 0;
+    const modal = document.getElementById('recipeFormModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('recipeForm').reset();
+        document.getElementById('ingredientsList').innerHTML = '';
+        ingredientCounter = 0;
+        // Reset date input to editable
+        const dateInput = document.getElementById('recipeDateInput');
+        if (dateInput) {
+            dateInput.readOnly = false;
+        }
+    }
 }
 
 /**
@@ -321,14 +381,16 @@ async function editRecipe(id) {
         document.getElementById('recipeId').value = id;
 
         // Load recipe details
-        const response = await apiGet(`/recipe/${id}`);
+        const response = await apiGet(`/recipes/${id}`);
 
         if (response.success) {
             const recipe = response.data;
             
             document.getElementById('recipeName').value = recipe.name;
             document.getElementById('recipeDate').value = recipe.date;
-            document.getElementById('recipeDateInput').value = recipe.date;
+            const dateInput = document.getElementById('recipeDateInput');
+            dateInput.value = recipe.date;
+            dateInput.readOnly = true; // Make date readonly when editing existing recipe
 
             // Load items for ingredient dropdowns
             const itemsResponse = await apiGet('/items', { per_page: 1000 });
@@ -348,71 +410,73 @@ async function editRecipe(id) {
                     `;
 
                     items.forEach(item => {
-                        const selected = item.id === ingredient.item_id ? 'selected' : '';
+                        const selected = ingredient.item_id === item.id ? 'selected' : '';
                         html += `<option value="${item.id}" ${selected}>${item.short_name} - ${item.name}</option>`;
                     });
 
                     html += `
                             </select>
-                            <input type="number" class="ingredient-quantity" step="0.001" min="0" 
-                                   value="${ingredient.quantity}" placeholder="Quantity" required>
+                            <input type="number" class="ingredient-quantity" step="0.001" min="0" value="${ingredient.quantity}" placeholder="Quantity" required>
                             <button type="button" class="btn btn-danger btn-small" onclick="removeIngredientRow('${rowId}')">Remove</button>
                         </div>
                     `;
 
                     document.getElementById('ingredientsList').insertAdjacentHTML('beforeend', html);
                 });
+            } else {
+                addIngredientRow();
             }
         }
     } catch (error) {
         console.error('Error loading recipe:', error);
-        showError(error.message || 'Failed to load recipe');
-        closeRecipeFormModal();
+        showError('Failed to load recipe');
     }
 }
 
 /**
- * Save recipe (Create or Update)
- * @param {Event} event
+ * Save recipe (create or update)
  */
 async function saveRecipe(event) {
     event.preventDefault();
 
+    const recipeId = document.getElementById('recipeId').value;
+    const recipeName = document.getElementById('recipeName').value;
+    const recipeDate = document.getElementById('recipeDateInput').value;
+
+    // Collect ingredients
+    const ingredients = [];
+    document.querySelectorAll('.ingredient-item').forEach(item => {
+        const itemId = item.querySelector('.ingredient-item-select').value;
+        const quantity = item.querySelector('.ingredient-quantity').value;
+        
+        if (itemId && quantity) {
+            ingredients.push({
+                item_id: parseInt(itemId),
+                quantity: parseFloat(quantity)
+            });
+        }
+    });
+
+    const recipeData = {
+        name: recipeName,
+        date: recipeDate,
+        ingredients: ingredients
+    };
+
     try {
-        const recipeId = document.getElementById('recipeId').value;
-        const recipeData = {
-            name: document.getElementById('recipeName').value.trim(),
-            date: document.getElementById('recipeDateInput').value,
-            ingredients: []
-        };
-
-        // Collect ingredients
-        const ingredientRows = document.querySelectorAll('.ingredient-item');
-        ingredientRows.forEach(row => {
-            const itemId = row.querySelector('.ingredient-item-select').value;
-            const quantity = parseFloat(row.querySelector('.ingredient-quantity').value);
-
-            if (itemId && !isNaN(quantity)) {
-                recipeData.ingredients.push({
-                    item_id: parseInt(itemId),
-                    quantity: quantity
-                });
-            }
-        });
-
         let response;
         if (recipeId) {
             // Update recipe
-            response = await apiPut(`/recipe/${recipeId}`, recipeData);
+            response = await apiPut(`/recipes/${recipeId}`, recipeData);
         } else {
             // Create recipe
-            response = await apiPost('/recipe', recipeData);
+            response = await apiPost('/recipes', recipeData);
         }
 
         if (response.success) {
             showSuccess(response.message || 'Recipe saved successfully');
             closeRecipeFormModal();
-            loadRecipesForMonth();
+            loadRecipes(); // Reload recipes
         } else {
             showError(response.message || 'Failed to save recipe');
         }
@@ -432,14 +496,14 @@ async function deleteRecipe(id) {
     }
 
     try {
-        const response = await apiDelete(`/recipe/${id}`);
+        const response = await apiDelete(`/recipes/${id}`);
 
         if (response.success) {
-            showSuccess(response.message || 'Recipe deleted successfully');
+            showSuccess('Recipe deleted successfully');
             closeRecipeModal();
-            loadRecipesForMonth();
+            loadRecipes(); // Reload recipes
         } else {
-            showError(response.message || 'Failed to delete recipe');
+            showError('Failed to delete recipe');
         }
     } catch (error) {
         console.error('Error deleting recipe:', error);
@@ -452,14 +516,6 @@ async function deleteRecipe(id) {
  */
 function openImportModal() {
     document.getElementById('importModal').style.display = 'block';
-    document.getElementById('importFiles').addEventListener('change', handleFileSelect);
-}
-
-/**
- * Close import modal
- */
-function closeImportModal() {
-    document.getElementById('importModal').style.display = 'none';
     document.getElementById('importForm').reset();
     document.getElementById('fileList').innerHTML = '';
     document.getElementById('importProgress').classList.add('hidden');
@@ -467,39 +523,37 @@ function closeImportModal() {
 }
 
 /**
- * Handle file selection
+ * Close import modal
  */
-function handleFileSelect(event) {
-    const files = event.target.files;
+function closeImportModal() {
+    document.getElementById('importModal').style.display = 'none';
+}
+
+/**
+ * Handle file selection for import
+ */
+function handleFileSelection() {
+    const files = document.getElementById('importFiles').files;
     const fileList = document.getElementById('fileList');
     fileList.innerHTML = '';
 
-    if (files.length > 7) {
-        showError('Maximum 7 files allowed');
-        event.target.value = '';
-        return;
+    if (files.length > 0) {
+        let html = '<h4>Selected Files:</h4><ul>';
+        for (let i = 0; i < files.length; i++) {
+            html += `<li>${files[i].name}</li>`;
+        }
+        html += '</ul>';
+        fileList.innerHTML = html;
     }
-
-    Array.from(files).forEach((file, index) => {
-        const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
-        fileItem.innerHTML = `
-            <span>${index + 1}. ${file.name} (${(file.size / 1024).toFixed(2)} KB)</span>
-        `;
-        fileList.appendChild(fileItem);
-    });
 }
 
 /**
  * Import recipes from Excel files
- * @param {Event} event
  */
 async function importRecipes(event) {
     event.preventDefault();
 
-    const fileInput = document.getElementById('importFiles');
-    const files = fileInput.files;
-
+    const files = document.getElementById('importFiles').files;
     if (files.length === 0) {
         showError('Please select at least one file');
         return;
@@ -510,66 +564,45 @@ async function importRecipes(event) {
         return;
     }
 
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append(`files[${i}]`, files[i]);
+    }
+
+    document.getElementById('importProgress').classList.remove('hidden');
+    document.getElementById('importResults').classList.add('hidden');
+
     try {
-        // Show progress
-        document.getElementById('importProgress').classList.remove('hidden');
-        document.getElementById('importResults').classList.add('hidden');
+        const response = await apiUpload('/recipes/import', formData);
 
-        // Create FormData for file upload
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) {
-            formData.append('files[]', files[i]);
-        }
-
-        // Make AJAX POST request with FormData
-        const response = await apiUpload('/recipe/import', formData);
-
-        // Hide progress, show results
         document.getElementById('importProgress').classList.add('hidden');
         document.getElementById('importResults').classList.remove('hidden');
 
         if (response.success) {
-            let resultsHtml = '<h3>Import Results</h3>';
-            resultsHtml += `<p><strong>Processed:</strong> ${response.data.processed} file(s)</p>`;
-
+            let resultsHtml = '<h4>Import Results:</h4>';
+            resultsHtml += `<p>Processed: ${response.data.processed} files</p>`;
+            
             if (response.data.recipes && response.data.recipes.length > 0) {
-                resultsHtml += '<div style="margin-top: 1rem;">';
+                resultsHtml += '<ul>';
                 response.data.recipes.forEach(result => {
-                    resultsHtml += `
-                        <div class="card" style="margin-bottom: 1rem;">
-                            <p><strong>File:</strong> ${result.file}</p>
-                            <p><strong>Status:</strong> <span style="color: ${result.status === 'success' ? '#27ae60' : '#e74c3c'}">${result.status}</span></p>
-                    `;
-
-                    if (result.status === 'success') {
-                        resultsHtml += `
-                            <p><strong>Recipe:</strong> ${result.recipe_name}</p>
-                            <p><strong>Ingredients:</strong> ${result.ingredients_count}</p>
-                        `;
-                    } else {
-                        resultsHtml += `<p><strong>Error:</strong> ${result.message}</p>`;
-                    }
-
-                    if (result.failed_ingredients && result.failed_ingredients.length > 0) {
-                        resultsHtml += '<p><strong>Auto-created Items:</strong></p><ul>';
-                        result.failed_ingredients.forEach(item => {
-                            resultsHtml += `<li>${item.short_name} - ${item.reason}</li>`;
-                        });
-                        resultsHtml += '</ul>';
-                    }
-
-                    resultsHtml += '</div>';
+                    resultsHtml += `<li>${result.file}: ${result.status} - ${result.message || ''}</li>`;
                 });
-                resultsHtml += '</div>';
+                resultsHtml += '</ul>';
             }
-
+            
+            if (response.data.failed_ingredients && response.data.failed_ingredients.length > 0) {
+                resultsHtml += '<h5>Failed Ingredients:</h5><ul>';
+                response.data.failed_ingredients.forEach(ing => {
+                    resultsHtml += `<li>${ing.short_name}: ${ing.reason}</li>`;
+                });
+                resultsHtml += '</ul>';
+            }
+            
             document.getElementById('importResults').innerHTML = resultsHtml;
             showSuccess('Import completed');
-            
-            // Reload recipes
-            loadRecipesForMonth();
+            loadRecipes(); // Reload recipes
         } else {
-            showError(response.message || 'Import failed');
+            showError('Import failed');
         }
     } catch (error) {
         console.error('Error importing recipes:', error);
@@ -578,16 +611,25 @@ async function importRecipes(event) {
     }
 }
 
-// Close modals when clicking outside
-window.onclick = function(event) {
-    const modals = ['recipeModal', 'recipeFormModal', 'importModal'];
-    modals.forEach(modalId => {
-        const modal = document.getElementById(modalId);
-        if (event.target === modal) {
-            if (modalId === 'recipeModal') closeRecipeModal();
-            if (modalId === 'recipeFormModal') closeRecipeFormModal();
-            if (modalId === 'importModal') closeImportModal();
-        }
-    });
+/**
+ * Show success message
+ */
+function showSuccess(message) {
+    alert(message); // You can replace this with a better notification system
 }
 
+/**
+ * Show error message
+ */
+function showError(message) {
+    alert(message); // You can replace this with a better notification system
+}
+
+// Update navigation functions
+function previousMonth() {
+    previousWeek();
+}
+
+function nextMonth() {
+    nextWeek();
+}

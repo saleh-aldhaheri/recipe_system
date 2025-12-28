@@ -81,11 +81,11 @@ if (! function_exists('e')) {
 function url(string $path = ''): string
 {
     $path = ltrim($path, '/');
-    
+
     if (empty($path)) {
         return '/';
     }
-    
+
     return '/'.$path;
 }
 
@@ -95,7 +95,7 @@ function url(string $path = ''): string
 function asset(string $path): string
 {
     $path = ltrim($path, '/');
-    
+
     // Assets are in public folder, so return relative path
     return '/'.$path;
 }

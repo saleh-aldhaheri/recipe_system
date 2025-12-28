@@ -15,7 +15,7 @@ class ShowItemsRequest implements RequestInterface
         $this->args = $args;
     }
 
-    public function validate(ServerRequestInterface|array $request): array
+    public function validate(ServerRequestInterface $request): array
     {
         $id = $this->args['id'] ?? null;
         $errors = [];

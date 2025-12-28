@@ -71,6 +71,14 @@ class RecipesController extends BaseController
         $validated = (new StoreRecipeRequest(new StoreIngredientsRequest))->validate($request);
 
         $recipe = DB::transaction(function () use ($validated) {
+
+            $existingRecipe = Recipe::where('date', $validated['date'])->first();
+            if ($existingRecipe) {
+                throw new \App\Exceptions\ValidationException([
+                    'date' => 'A recipe already exists for this date. Only one recipe per date is allowed.',
+                ]);
+            }
+
             $recipe = Recipe::create([
                 'name' => $validated['name'],
                 'date' => $validated['date'],
@@ -81,7 +89,7 @@ class RecipesController extends BaseController
                 $ingredientsData = [];
 
                 foreach ($validated['ingredients'] as $ingredient) {
-                    $ingredientsData[] = $ingredientRequest->validate($ingredient);
+                    $ingredientsData[] = $ingredientRequest->validateData($ingredient);
                 }
 
                 $recipe->ingredients()->createMany($ingredientsData);
@@ -110,6 +118,15 @@ class RecipesController extends BaseController
                     $updateData['name'] = $validated['name'];
                 }
                 if (isset($validated['date'])) {
+                    // Double check for duplicate date (excluding current recipe)
+                    $existingRecipe = Recipe::where('date', $validated['date'])
+                        ->where('id', '!=', $recipe->id)
+                        ->first();
+                    if ($existingRecipe) {
+                        throw new \App\Exceptions\ValidationException([
+                            'date' => 'A recipe already exists for this date. Only one recipe per date is allowed.',
+                        ]);
+                    }
                     $updateData['date'] = $validated['date'];
                 }
                 $recipe->update($updateData);
@@ -123,7 +140,7 @@ class RecipesController extends BaseController
                     $ingredientsData = [];
 
                     foreach ($validated['ingredients'] as $ingredient) {
-                        $ingredientsData[] = $ingredientRequest->validate($ingredient);
+                        $ingredientsData[] = $ingredientRequest->validateData($ingredient);
                     }
 
                     $recipe->ingredients()->createMany($ingredientsData);

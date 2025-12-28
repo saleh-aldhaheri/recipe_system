@@ -29,7 +29,7 @@ $capsule->addConnection([
     'collation' => $_ENV['DB_COLLATION'],
     'prefix' => $_ENV['DB_PREFIX'] ?? '',
 ]);
-
+//
 $capsule->setEventDispatcher(new Dispatcher(new Container));
 
 $capsule->setAsGlobal();

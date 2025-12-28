@@ -8,7 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class InputRecipesRequest implements RequestInterface
 {
-    public function validate(ServerRequestInterface|array $request): array
+    public function validate(ServerRequestInterface $request): array
     {
         $files = $request->getUploadedFiles();
         $errors = [];

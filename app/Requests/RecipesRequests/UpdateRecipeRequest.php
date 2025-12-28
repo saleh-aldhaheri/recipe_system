@@ -3,9 +3,9 @@
 namespace App\Requests\RecipesRequests;
 
 use App\Exceptions\ValidationException;
+use App\Models\Item;
 use App\Requests\RequestInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Throwable;
 
 class UpdateRecipeRequest implements RequestInterface
 {
@@ -19,6 +19,20 @@ class UpdateRecipeRequest implements RequestInterface
     public function validate(ServerRequestInterface $request): array
     {
         $data = $request->getParsedBody() ?? [];
+
+        if (empty($data)) {
+            $contentType = $request->getHeaderLine('Content-Type');
+            if (strpos($contentType, 'application/json') !== false) {
+                $body = $request->getBody()->getContents();
+                if (! empty($body)) {
+                    $jsonData = json_decode($body, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $data = $jsonData;
+                    }
+                }
+            }
+        }
+
         $errors = [];
 
         if (isset($data['name'])) {
@@ -37,6 +51,13 @@ class UpdateRecipeRequest implements RequestInterface
 
             if (! $date || $date->format('Y-m-d') !== $dateString) {
                 $errors['date'] = 'Date must be in Y-m-d format (e.g., 2025-12-28)';
+            } else {
+                $existingRecipe = \App\Models\Recipe::where('date', $dateString)
+                    ->where('id', '!=', $this->recipeId)
+                    ->first();
+                if ($existingRecipe) {
+                    $errors['date'] = 'A recipe already exists for this date. Only one recipe per date is allowed.';
+                }
             }
         }
 
@@ -48,17 +69,12 @@ class UpdateRecipeRequest implements RequestInterface
                 foreach ($data['ingredients'] as $key => $ingredient) {
                     if (! is_array($ingredient)) {
                         $ingredientsErrors[$key] = ['ingredient' => 'Each ingredient must be an object/array'];
-                    } else {
-                        try {
-                            $this->storeIngredients->validate($ingredient);
-                        } catch (ValidationException $e) {
-                            $ingredientsErrors[$key] = $e->getErrors();
-                        } catch (Throwable $e) {
-                            $ingredientsErrors[$key] = ['ingredient' => 'Invalid ingredient data'];
-                        }
+                    } elseif ((int) $data['item_id'] <= 0) {
+                        $ingredientsErrors[$key] = 'Item ID must be a positive number';
+                    } elseif (! Item::find($data['item_id'])) {
+                        $ingredientsErrors[$key] = 'Item not found';
                     }
                 }
-
                 if (! empty($ingredientsErrors)) {
                     $errors['ingredients'] = $ingredientsErrors;
                 }

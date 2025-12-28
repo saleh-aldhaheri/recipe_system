@@ -11,9 +11,23 @@ class UpdateIngredientsRequest implements RequestInterface
 {
     public function __construct(private int $ingredientId) {}
 
-    public function validate(ServerRequestInterface|array $request): array
+    public function validate(ServerRequestInterface $request): array
     {
         $data = $request->getParsedBody() ?? [];
+
+        if (empty($data)) {
+            $contentType = $request->getHeaderLine('Content-Type');
+            if (strpos($contentType, 'application/json') !== false) {
+                $body = $request->getBody()->getContents();
+                if (! empty($body)) {
+                    $jsonData = json_decode($body, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $data = $jsonData;
+                    }
+                }
+            }
+        }
+
         $errors = [];
 
         if (isset($data['item_id'])) {

@@ -12,7 +12,7 @@ class ShowRecipesRequest implements RequestInterface
         private array $args
     ) {}
 
-    public function validate(ServerRequestInterface|array $request): array
+    public function validate(ServerRequestInterface $request): array
     {
         $errors = [];
 
