@@ -48,27 +48,56 @@ class StoreIngredientsRequest implements RequestInterface
                 $errors['recipe_id'] = 'Recipe ID must be a number';
             } elseif ((int) $data['recipe_id'] <= 0) {
                 $errors['recipe_id'] = 'Recipe ID must be a positive number';
-            } elseif (! Recipe::find($data['recipe_id'])) {
-                $errors['recipe_id'] = 'Recipe not found';
+            } else {
+                $recipe = Recipe::find($data['recipe_id']);
+                if (! $recipe) {
+                    $errors['recipe_id'] = 'Recipe not found';
+                } elseif (isset($data['item_id']) && is_numeric($data['item_id']) && (int) $data['item_id'] > 0) {
+                    $existingIngredient = \App\Models\Ingredient::where('recipe_id', (int) $data['recipe_id'])
+                        ->where('item_id', (int) $data['item_id'])
+                        ->first();
+                    if ($existingIngredient) {
+                        $errors['item_id'] = 'This item is already added to this recipe';
+                    }
+                }
             }
         }
 
+        $item = null;
         if (! isset($data['item_id'])) {
             $errors['item_id'] = 'Item ID is required';
         } elseif (! is_numeric($data['item_id'])) {
             $errors['item_id'] = 'Item ID must be a number';
         } elseif ((int) $data['item_id'] <= 0) {
             $errors['item_id'] = 'Item ID must be a positive number';
-        } elseif (! Item::find($data['item_id'])) {
-            $errors['item_id'] = 'Item not found';
+        } else {
+            $item = Item::find($data['item_id']);
+            if (! $item) {
+                $errors['item_id'] = 'Item not found';
+            }
         }
 
         if (! isset($data['quantity'])) {
             $errors['quantity'] = 'Quantity is required';
         } elseif (! is_numeric($data['quantity'])) {
             $errors['quantity'] = 'Quantity must be a number';
-        } elseif ((float) $data['quantity'] < 0) {
-            $errors['quantity'] = 'Quantity must be positive or zero';
+        } elseif ((float) $data['quantity'] <= 0) {
+            $errors['quantity'] = 'Quantity must be greater than zero';
+        } elseif ($item && (float) $data['quantity'] > (float) $item->balance) {
+            $errors['quantity'] = "Quantity ({$data['quantity']}) cannot exceed item balance ({$item->balance})";
+        }
+
+        if ($this->requireRecipeId && isset($data['recipe_id']) && $item) {
+            $recipe = Recipe::with('ingredients.item')->find($data['recipe_id']);
+            if ($recipe && $recipe->ingredients->count() > 0) {
+                $existingUnits = $recipe->ingredients->map(function ($ing) {
+                    return $ing->item ? $ing->item->unit : null;
+                })->filter()->unique()->values();
+
+                if ($existingUnits->count() === 1 && $existingUnits->first() !== $item->unit) {
+                    $errors['item_id'] = "Unit mismatch. Recipe uses '{$existingUnits->first()}' but item has '{$item->unit}'";
+                }
+            }
         }
 
         if (! empty($errors)) {

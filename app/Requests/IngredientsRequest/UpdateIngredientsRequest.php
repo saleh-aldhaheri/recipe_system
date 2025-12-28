@@ -3,7 +3,9 @@
 namespace App\Requests\IngredientsRequest;
 
 use App\Exceptions\ValidationException;
+use App\Models\Ingredient;
 use App\Models\Item;
+use App\Models\Recipe;
 use App\Requests\RequestInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -29,22 +31,55 @@ class UpdateIngredientsRequest implements RequestInterface
         }
 
         $errors = [];
+        $ingredient = Ingredient::with('recipe.ingredients.item')->find($this->ingredientId);
+        $item = null;
 
         if (isset($data['item_id'])) {
             if (! is_numeric($data['item_id'])) {
                 $errors['item_id'] = 'Item ID must be a number';
             } elseif ((int) $data['item_id'] <= 0) {
                 $errors['item_id'] = 'Item ID must be a positive number';
-            } elseif (! Item::find($data['item_id'])) {
-                $errors['item_id'] = 'Item not found';
+            } else {
+                $item = Item::find($data['item_id']);
+                if (! $item) {
+                    $errors['item_id'] = 'Item not found';
+                }
             }
         }
 
         if (isset($data['quantity'])) {
             if (! is_numeric($data['quantity'])) {
                 $errors['quantity'] = 'Quantity must be a number';
-            } elseif ((float) $data['quantity'] < 0) {
-                $errors['quantity'] = 'Quantity must be positive or zero';
+            } elseif ((float) $data['quantity'] <= 0) {
+                $errors['quantity'] = 'Quantity must be greater than zero';
+            } elseif ($item) {
+
+                $currentIngredient = Ingredient::find($this->ingredientId);
+                $availableBalance = (float) $item->balance;
+                
+                if ($currentIngredient && $currentIngredient->item_id == $item->id) {
+                    $availableBalance += (float) $currentIngredient->quantity;
+                }
+                
+                if ((float) $data['quantity'] > $availableBalance) {
+                    $errors['quantity'] = "Quantity ({$data['quantity']}) cannot exceed available balance ({$availableBalance})";
+                }
+            }
+        }
+
+        if (isset($data['item_id']) && $item && $ingredient && $ingredient->recipe) {
+            $recipe = $ingredient->recipe;
+            $existingUnits = $recipe->ingredients
+                ->where('id', '!=', $this->ingredientId) 
+                ->map(function ($ing) {
+                    return $ing->item ? $ing->item->unit : null;
+                })
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($existingUnits->count() === 1 && $existingUnits->first() !== $item->unit) {
+                $errors['item_id'] = "Unit mismatch. Recipe uses '{$existingUnits->first()}' but item has '{$item->unit}'";
             }
         }
 

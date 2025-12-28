@@ -232,18 +232,20 @@ async function openDayRecipes(dayDate) {
  * @param {string} dateString
  */
 function displayDayRecipes(recipes, dateString) {
-    let html = `
-        <div style="margin-bottom: 1rem;">
-            <button class="btn btn-primary" onclick="openRecipeForm('${dateString}')">+ Add New Recipe</button>
-        </div>
-    `;
+    let html = '';
 
     if (recipes.length === 0) {
-        html += '<p>No recipes for this day. Click "Add New Recipe" to create one.</p>';
+        // No recipe exists for this day - show option to create
+        html = `
+            <div style="margin-bottom: 1rem;">
+                <button class="btn btn-primary" onclick="openRecipeForm('${dateString}')">+ Add New Recipe</button>
+            </div>
+            <p>No recipes for this day. Click "Add New Recipe" to create one.</p>
+        `;
     } else {
-        // Since only one recipe per date is allowed, show the recipe
+        // Recipe exists for this day - show recipe details with Edit/Delete options only
         const recipe = recipes[0];
-        html += `
+        html = `
             <div class="card">
                 <h3>${recipe.name}</h3>
                 <p style="color: #7f8c8d; margin: 0.5rem 0;">Date: ${recipe.date}</p>

@@ -96,6 +96,5 @@ function asset(string $path): string
 {
     $path = ltrim($path, '/');
 
-    // Assets are in public folder, so return relative path
     return '/'.$path;
 }

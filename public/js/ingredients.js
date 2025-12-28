@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 async function loadRecipes() {
     try {
-        const response = await apiGet('/recipe', { per_page: 1000 });
+        const response = await apiGet('/recipes', { per_page: 1000 });
         if (response.success) {
             allRecipes = response.data;
             populateRecipeDropdowns();

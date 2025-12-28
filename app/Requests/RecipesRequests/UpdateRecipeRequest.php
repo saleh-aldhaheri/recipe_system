@@ -66,13 +66,23 @@ class UpdateRecipeRequest implements RequestInterface
             if (! is_array($data['ingredients'])) {
                 $errors['ingredients'] = 'Ingredients must be an array';
             } else {
+                $itemIds = [];
                 foreach ($data['ingredients'] as $key => $ingredient) {
                     if (! is_array($ingredient)) {
                         $ingredientsErrors[$key] = ['ingredient' => 'Each ingredient must be an object/array'];
-                    } elseif ((int) $data['item_id'] <= 0) {
-                        $ingredientsErrors[$key] = 'Item ID must be a positive number';
-                    } elseif (! Item::find($data['item_id'])) {
-                        $ingredientsErrors[$key] = 'Item not found';
+                    } elseif (! isset($ingredient['item_id'])) {
+                        $ingredientsErrors[$key] = ['item_id' => 'Item ID is required'];
+                    } elseif ((int) $ingredient['item_id'] <= 0) {
+                        $ingredientsErrors[$key] = ['item_id' => 'Item ID must be a positive number'];
+                    } elseif (! Item::find($ingredient['item_id'])) {
+                        $ingredientsErrors[$key] = ['item_id' => 'Item not found'];
+                    } else {
+                        $itemId = (int) $ingredient['item_id'];
+                        if (isset($itemIds[$itemId])) {
+                            $ingredientsErrors[$key] = ['item_id' => 'This item is already added to this recipe'];
+                        } else {
+                            $itemIds[$itemId] = true;
+                        }
                     }
                 }
                 if (! empty($ingredientsErrors)) {

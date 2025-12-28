@@ -4,15 +4,13 @@ namespace App\Services;
 
 use App\Models\Item;
 use App\Models\Recipe;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Capsule\Manager as DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Psr\Http\Message\UploadedFileInterface;
 
 class ImportRecipeService
 {
     /**
-     * Process multiple uploaded files
-     *
      * @param  array  $files  Normalized uploaded files
      * @return array ['results' => array, 'failed_ingredients' => array]
      */
@@ -29,9 +27,7 @@ class ImportRecipeService
         ];
     }
 
-    /**
-     * Recursively process files (handles nested arrays)
-     */
+
     private function processFilesRecursive($files, array &$results, array &$allFailedIngredients): void
     {
         foreach ($files as $fileKey => $file) {
@@ -47,9 +43,7 @@ class ImportRecipeService
         }
     }
 
-    /**
-     * Process a single Excel file
-     */
+
     public function processFile(UploadedFileInterface $file): array
     {
         try {
@@ -77,7 +71,7 @@ class ImportRecipeService
                 ];
             }
 
-            return DB::transaction(function () use ($product, $date, $items, $file) {
+            return DB::connection()->transaction(function () use ($product, $date, $items, $file) {
                 $recipe = Recipe::firstOrCreate(
                     [
                         'name' => $product,
@@ -153,8 +147,6 @@ class ImportRecipeService
     }
 
     /**
-     * Extract data from Excel file
-     *
      * @return array ['date' => string, 'product' => string, 'items' => array]
      */
     public function extractData(UploadedFileInterface $file): array
@@ -320,9 +312,6 @@ class ImportRecipeService
         }
     }
 
-    /**
-     * Save uploaded file to temporary location
-     */
     private function saveTemporaryFile(UploadedFileInterface $file): string
     {
         $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.uniqid('excel_', true).'.xlsx';
