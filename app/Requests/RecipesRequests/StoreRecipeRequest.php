@@ -69,14 +69,23 @@ class StoreRecipeRequest implements RequestInterface
                         $ingredientsErrors[$key] = ['item_id' => 'Item ID is required'];
                     } elseif ((int) $ingredient['item_id'] <= 0) {
                         $ingredientsErrors[$key] = ['item_id' => 'Item ID must be a positive number'];
-                    } elseif (! Item::find($ingredient['item_id'])) {
-                        $ingredientsErrors[$key] = ['item_id' => 'Item not found'];
                     } else {
-                        $itemId = (int) $ingredient['item_id'];
-                        if (isset($itemIds[$itemId])) {
-                            $ingredientsErrors[$key] = ['item_id' => 'This item is already added to this recipe'];
+                        $item = Item::find($ingredient['item_id']);
+                        if (! $item) {
+                            $ingredientsErrors[$key] = ['item_id' => 'Item not found'];
                         } else {
-                            $itemIds[$itemId] = true;
+                            $itemId = (int) $ingredient['item_id'];
+                            if (isset($itemIds[$itemId])) {
+                                $ingredientsErrors[$key] = ['item_id' => 'This item is already added to this recipe'];
+                            } else {
+                                $itemIds[$itemId] = true;
+
+                                if (! isset($ingredient['quantity']) || ! is_numeric($ingredient['quantity']) || (float) $ingredient['quantity'] <= 0) {
+                                    $ingredientsErrors[$key] = ['quantity' => 'Quantity must be a positive number'];
+                                } elseif ((float) $ingredient['quantity'] > (float) $item->balance) {
+                                    $ingredientsErrors[$key] = ['quantity' => "Quantity ({$ingredient['quantity']}) cannot exceed item balance ({$item->balance})"];
+                                }
+                            }
                         }
                     }
                 }

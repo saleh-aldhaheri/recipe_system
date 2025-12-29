@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\ingredientsService;
+use App\Models\Item;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -32,22 +33,32 @@ class Ingredient extends Model
     {
         parent::boot();
 
-        static::created(function (Ingredient $ingredient) {
+        static::creating(function (Ingredient $ingredient) {
             $ingredient->load('item');
+            if (! $ingredient->item) {
+                $item = Item::find($ingredient->item_id);
+                if ($item) {
+                    $ingredient->setRelation('item', $item);
+                }
+            }
             $ingredientService = new ingredientsService;
             $ingredientService->checkItem($ingredient);
-            $ingredientService->updateItemOnCreate($ingredient);
         });
 
-        static::updated(function (Ingredient $ingredient) {
+        static::updating(function (Ingredient $ingredient) {
             $ingredient->load('item');
-            $ingredientService = new ingredientsService;
-            $ingredientService->updateItemOnUpdate($ingredient);
+            if (! $ingredient->item) {
+                $item = Item::find($ingredient->item_id);
+                if ($item) {
+                    $ingredient->setRelation('item', $item);
+                }
+            }
         });
 
-        static::deleted(function (Ingredient $ingredient) {
+        static::deleting(function (Ingredient $ingredient) {
             $ingredient->load('item');
             (new ingredientsService)->updateItemOnDelete($ingredient);
         });
+        
     }
 }
