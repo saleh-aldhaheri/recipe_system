@@ -5,7 +5,6 @@ namespace App\Requests\IngredientsRequest;
 use App\Exceptions\ValidationException;
 use App\Models\Ingredient;
 use App\Models\Item;
-use App\Models\Recipe;
 use App\Requests\RequestInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -15,6 +14,7 @@ class UpdateIngredientsRequest implements RequestInterface
 
     public function validate(ServerRequestInterface $request): array
     {
+
         $data = $request->getParsedBody() ?? [];
 
         if (empty($data)) {
@@ -56,11 +56,11 @@ class UpdateIngredientsRequest implements RequestInterface
 
                 $currentIngredient = Ingredient::find($this->ingredientId);
                 $availableBalance = (float) $item->balance;
-                
+
                 if ($currentIngredient && $currentIngredient->item_id == $item->id) {
                     $availableBalance += (float) $currentIngredient->quantity;
                 }
-                
+
                 if ((float) $data['quantity'] > $availableBalance) {
                     $errors['quantity'] = "Quantity ({$data['quantity']}) cannot exceed available balance ({$availableBalance})";
                 }
@@ -70,7 +70,7 @@ class UpdateIngredientsRequest implements RequestInterface
         if (isset($data['item_id']) && $item && $ingredient && $ingredient->recipe) {
             $recipe = $ingredient->recipe;
             $existingUnits = $recipe->ingredients
-                ->where('id', '!=', $this->ingredientId) 
+                ->where('id', '!=', $this->ingredientId)
                 ->map(function ($ing) {
                     return $ing->item ? $ing->item->unit : null;
                 })

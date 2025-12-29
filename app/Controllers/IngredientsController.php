@@ -3,11 +3,9 @@
 namespace App\Controllers;
 
 use App\Models\Ingredient;
-use App\Models\Item;
 use App\Requests\IngredientsRequest\ShowIngredientsRequest;
 use App\Requests\IngredientsRequest\StoreIngredientsRequest;
 use App\Requests\IngredientsRequest\UpdateIngredientsRequest;
-use Illuminate\Database\Capsule\Manager as DB;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -70,23 +68,7 @@ class IngredientsController extends BaseController
     public function store(Request $request, Response $response): Response
     {
         $validatedData = (new StoreIngredientsRequest)->validate($request);
-
-        $ingredient = DB::connection()->transaction(function () use ($validatedData) {
-            $item = Item::findOrFail($validatedData['item_id']);
-
-            if ((float) $item->balance < (float) $validatedData['quantity']) {
-                throw new \App\Exceptions\ValidationException([
-                    'quantity' => "Insufficient balance. Available: {$item->balance}, Required: {$validatedData['quantity']}",
-                ]);
-            }
-
-            $item->balance -= (float) $validatedData['quantity'];
-            $item->save();
-
-            $ingredient = Ingredient::create($validatedData);
-
-            return $ingredient->load(['recipe', 'item']);
-        });
+        $ingredient = Ingredient::create($validatedData);
 
         return jsonResponse($response, [
             'success' => true,
@@ -100,45 +82,8 @@ class IngredientsController extends BaseController
         $id = (int) $args['id'];
         $ingredient = Ingredient::findOrFail($id);
         $validatedData = (new UpdateIngredientsRequest($id))->validate($request);
-
-        $ingredient = DB::connection()->transaction(function () use ($ingredient, $validatedData) {
-            $oldQuantity = (float) $ingredient->quantity;
-            $oldItemId = $ingredient->item_id;
-            $newQuantity = isset($validatedData['quantity']) ? (float) $validatedData['quantity'] : $oldQuantity;
-            $newItemId = isset($validatedData['item_id']) ? (int) $validatedData['item_id'] : $oldItemId;
-
-            if ($oldItemId === $newItemId) {
-                $item = Item::findOrFail($newItemId);
-                $item->balance += $oldQuantity; 
-                
-                if ($newQuantity > $item->balance) {
-                    throw new \App\Exceptions\ValidationException([
-                        'quantity' => "Insufficient balance. Available: {$item->balance}, Required: {$newQuantity}",
-                    ]);
-                }
-                
-                $item->balance -= $newQuantity;
-                $item->save();
-            } else {
-
-                $oldItem = Item::findOrFail($oldItemId);
-                $oldItem->balance += $oldQuantity;
-                $oldItem->save();
-
-                $newItem = Item::findOrFail($newItemId);
-                if ($newQuantity > $newItem->balance) {
-                    throw new \App\Exceptions\ValidationException([
-                        'quantity' => "Insufficient balance. Available: {$newItem->balance}, Required: {$newQuantity}",
-                    ]);
-                }
-                $newItem->balance -= $newQuantity;
-                $newItem->save();
-            }
-
-            $ingredient->update($validatedData);
-
-            return $ingredient->load(['recipe', 'item']);
-        });
+        $ingredient->update($validatedData);
+        $ingredient->load(['recipe', 'item']);
 
         return jsonResponse($response, [
             'success' => true,
@@ -151,14 +96,7 @@ class IngredientsController extends BaseController
     {
         $id = (int) $args['id'];
         $ingredient = Ingredient::findOrFail($id);
-
-        DB::connection()->transaction(function () use ($ingredient) {
-            $item = Item::findOrFail($ingredient->item_id);
-            $item->balance += (float) $ingredient->quantity;
-            $item->save();
-
-            $ingredient->delete();
-        });
+        $ingredient->delete();
 
         return jsonResponse($response, [
             'success' => true,

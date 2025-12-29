@@ -14,25 +14,87 @@ document.addEventListener('DOMContentLoaded', function() {
     renderCalendar();
     loadRecipes();
     
-    // Add click event listener to close modal when clicking outside
-    const recipeModal = document.getElementById('recipeModal');
-    if (recipeModal) {
-        recipeModal.addEventListener('click', function(event) {
-            if (event.target === recipeModal) {
+    // Use event delegation for modal closing and button clicks
+    document.addEventListener('click', function(event) {
+        const target = event.target;
+        
+        // Close modal when clicking outside
+        const recipeModal = document.getElementById('recipeModal');
+        if (recipeModal && recipeModal.style.display === 'block') {
+            if (target === recipeModal) {
                 closeRecipeModal();
+                return;
             }
-        });
-    }
-    
-    // Add click event listener to recipe form modal
-    const recipeFormModal = document.getElementById('recipeFormModal');
-    if (recipeFormModal) {
-        recipeFormModal.addEventListener('click', function(event) {
-            if (event.target === recipeFormModal) {
+        }
+        
+        const recipeFormModal = document.getElementById('recipeFormModal');
+        if (recipeFormModal && recipeFormModal.style.display === 'block') {
+            if (target === recipeFormModal) {
                 closeRecipeFormModal();
+                return;
             }
-        });
-    }
+        }
+        
+        // Handle button clicks inside modals using event delegation
+        if (target.closest('#recipeModalBody')) {
+            const action = target.getAttribute('data-action');
+            
+            // Handle "Add New Recipe" button
+            if (action === 'add-recipe') {
+                const dateString = selectedDay ? selectedDay.toISOString().split('T')[0] : '';
+                if (dateString) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openRecipeForm(dateString);
+                }
+                return;
+            }
+            
+            // Handle "Edit" button
+            if (action === 'edit-recipe') {
+                const recipeId = target.getAttribute('data-recipe-id');
+                if (recipeId) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    editRecipe(parseInt(recipeId));
+                }
+                return;
+            }
+            
+            // Handle "Delete" button
+            if (action === 'delete-recipe') {
+                const recipeId = target.getAttribute('data-recipe-id');
+                if (recipeId) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    deleteRecipe(parseInt(recipeId));
+                }
+                return;
+            }
+        }
+        
+        // Handle close button clicks
+        if (target.classList.contains('close') || (target.closest('.close') && !target.closest('button:not(.close)'))) {
+            event.preventDefault();
+            event.stopPropagation();
+            const modal = target.closest('.modal');
+            if (modal) {
+                if (modal.id === 'recipeModal') {
+                    closeRecipeModal();
+                } else if (modal.id === 'recipeFormModal') {
+                    closeRecipeFormModal();
+                } else if (modal.id === 'importModal') {
+                    closeImportModal();
+                }
+            }
+            return;
+        }
+        
+        // Prevent modal content clicks from closing modal (but allow button clicks)
+        if (target.closest('.modal-content') && !target.closest('button') && !target.closest('a')) {
+            event.stopPropagation();
+        }
+    });
 });
 
 /**
@@ -70,6 +132,10 @@ function renderCalendar() {
 
     // Clear calendar
     const calendar = document.getElementById('calendar');
+    if (!calendar) {
+        console.error('Calendar element not found');
+        return;
+    }
     calendar.innerHTML = '';
 
     // Add days of the week (Monday to Sunday)
@@ -78,6 +144,7 @@ function renderCalendar() {
     for (let i = 0; i < 7; i++) {
         const dayDate = new Date(weekStart);
         dayDate.setDate(dayDate.getDate() + i);
+        const dateString = dayDate.toISOString().split('T')[0];
         
         const dayElement = document.createElement('div');
         dayElement.className = 'calendar-day';
@@ -88,8 +155,15 @@ function renderCalendar() {
             dayElement.classList.add('today');
         }
         
-        // Click handler
-        dayElement.onclick = () => openDayRecipes(dayDate);
+        // Click handler - use event delegation approach
+        dayElement.setAttribute('data-date', dateString);
+        dayElement.style.cursor = 'pointer';
+        dayElement.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const clickedDate = new Date(dayDate);
+            openDayRecipes(clickedDate);
+        });
 
         const dayHeader = document.createElement('div');
         dayHeader.className = 'calendar-day-header';
@@ -101,7 +175,7 @@ function renderCalendar() {
 
         const recipesContainer = document.createElement('div');
         recipesContainer.className = 'calendar-day-recipes';
-        recipesContainer.id = `recipes-${dayDate.toISOString().split('T')[0]}`;
+        recipesContainer.id = `recipes-${dateString}`;
         dayElement.appendChild(recipesContainer);
 
         calendar.appendChild(dayElement);
@@ -188,18 +262,53 @@ function nextWeek() {
  * @param {Date} dayDate
  */
 async function openDayRecipes(dayDate) {
-    selectedDay = dayDate;
-    const dateString = dayDate.toISOString().split('T')[0];
+    if (!dayDate) {
+        console.error('Day date is required');
+        return;
+    }
     
-    document.getElementById('selectedDate').textContent = dateString;
-    document.getElementById('recipeModalTitle').textContent = `Recipes for ${dateString}`;
-    document.getElementById('recipeModal').style.display = 'block';
-    document.getElementById('recipeModalBody').innerHTML = `
+    // Close any other open modals first
+    const recipeFormModal = document.getElementById('recipeFormModal');
+    if (recipeFormModal && recipeFormModal.style.display === 'block') {
+        closeRecipeFormModal();
+    }
+    
+    selectedDay = new Date(dayDate);
+    const dateString = selectedDay.toISOString().split('T')[0];
+    
+    const modal = document.getElementById('recipeModal');
+    const selectedDateEl = document.getElementById('selectedDate');
+    const modalTitleEl = document.getElementById('recipeModalTitle');
+    const modalBodyEl = document.getElementById('recipeModalBody');
+    
+    if (!modal || !selectedDateEl || !modalTitleEl || !modalBodyEl) {
+        console.error('Modal elements not found');
+        return;
+    }
+    
+    // Close modal if already open to reset it
+    if (modal.style.display === 'block') {
+        modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        modal.style.opacity = '0';
+        void modal.offsetHeight;
+    }
+    
+    // Set content
+    selectedDateEl.textContent = dateString;
+    modalTitleEl.textContent = `Recipes for ${dateString}`;
+    modalBodyEl.innerHTML = `
         <div class="loading">
             <div class="spinner"></div>
             <p>Loading recipes...</p>
         </div>
     `;
+    
+    // Force reflow and show modal
+    void modal.offsetHeight;
+    modal.style.visibility = 'visible';
+    modal.style.display = 'block';
+    modal.style.opacity = '1';
 
     try {
         // Load recipes for this day
@@ -238,7 +347,7 @@ function displayDayRecipes(recipes, dateString) {
         // No recipe exists for this day - show option to create
         html = `
             <div style="margin-bottom: 1rem;">
-                <button class="btn btn-primary" onclick="openRecipeForm('${dateString}')">+ Add New Recipe</button>
+                <button class="btn btn-primary" data-action="add-recipe">+ Add New Recipe</button>
             </div>
             <p>No recipes for this day. Click "Add New Recipe" to create one.</p>
         `;
@@ -260,8 +369,8 @@ function displayDayRecipes(recipes, dateString) {
                     </div>
                 ` : ''}
                 <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                    <button class="btn btn-primary btn-small" onclick="editRecipe(${recipe.id})">Edit</button>
-                    <button class="btn btn-danger btn-small" onclick="deleteRecipe(${recipe.id})">Delete</button>
+                    <button class="btn btn-primary btn-small" data-recipe-id="${recipe.id}" data-action="edit-recipe">Edit</button>
+                    <button class="btn btn-danger btn-small" data-recipe-id="${recipe.id}" data-action="delete-recipe">Delete</button>
                 </div>
             </div>
         `;
@@ -277,10 +386,17 @@ function closeRecipeModal() {
     const modal = document.getElementById('recipeModal');
     if (modal) {
         modal.style.display = 'none';
-        // Clear modal body to prevent stale content
-        document.getElementById('recipeModalBody').innerHTML = '';
+        modal.style.visibility = 'hidden';
+        modal.style.opacity = '0';
+        const modalBody = document.getElementById('recipeModalBody');
+        if (modalBody) {
+            modalBody.innerHTML = '';
+        }
+        selectedDay = null;
+        
+        // Force reflow
+        void modal.offsetHeight;
     }
-    loadRecipes(); // Refresh calendar
 }
 
 /**
@@ -290,18 +406,29 @@ function closeRecipeModal() {
 function openRecipeForm(dateString) {
     closeRecipeModal();
     
+    const formModal = document.getElementById('recipeFormModal');
+    if (!formModal) {
+        console.error('Recipe form modal not found');
+        return;
+    }
+    
     document.getElementById('recipeFormTitle').textContent = 'Add New Recipe';
     document.getElementById('recipeId').value = '';
     document.getElementById('recipeDate').value = dateString;
     const dateInput = document.getElementById('recipeDateInput');
     dateInput.value = dateString;
-    dateInput.readOnly = true; // Make date readonly when clicked from calendar
+    dateInput.readOnly = true;
     document.getElementById('recipeName').value = '';
     document.getElementById('ingredientsList').innerHTML = '';
     ingredientCounter = 0;
     
-    addIngredientRow(); // Add one empty ingredient row
-    document.getElementById('recipeFormModal').style.display = 'block';
+    addIngredientRow();
+    
+    formModal.style.display = 'none';
+    formModal.style.visibility = 'hidden';
+    void formModal.offsetHeight;
+    formModal.style.visibility = 'visible';
+    formModal.style.display = 'block';
 }
 
 /**
@@ -311,14 +438,15 @@ function closeRecipeFormModal() {
     const modal = document.getElementById('recipeFormModal');
     if (modal) {
         modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
         document.getElementById('recipeForm').reset();
         document.getElementById('ingredientsList').innerHTML = '';
         ingredientCounter = 0;
-        // Reset date input to editable
         const dateInput = document.getElementById('recipeDateInput');
         if (dateInput) {
             dateInput.readOnly = false;
         }
+        void modal.offsetHeight;
     }
 }
 
@@ -378,7 +506,14 @@ function removeIngredientRow(rowId) {
 async function editRecipe(id) {
     try {
         closeRecipeModal();
-        document.getElementById('recipeFormModal').style.display = 'block';
+        const formModal = document.getElementById('recipeFormModal');
+        if (formModal) {
+            formModal.style.display = 'none';
+            formModal.style.visibility = 'hidden';
+            void formModal.offsetHeight;
+            formModal.style.visibility = 'visible';
+            formModal.style.display = 'block';
+        }
         document.getElementById('recipeFormTitle').textContent = 'Edit Recipe';
         document.getElementById('recipeId').value = id;
 
@@ -517,18 +652,30 @@ async function deleteRecipe(id) {
  * Open import modal
  */
 function openImportModal() {
-    document.getElementById('importModal').style.display = 'block';
-    document.getElementById('importForm').reset();
-    document.getElementById('fileList').innerHTML = '';
-    document.getElementById('importProgress').classList.add('hidden');
-    document.getElementById('importResults').classList.add('hidden');
+    const modal = document.getElementById('importModal');
+    if (modal) {
+        document.getElementById('importForm').reset();
+        document.getElementById('fileList').innerHTML = '';
+        document.getElementById('importProgress').classList.add('hidden');
+        document.getElementById('importResults').classList.add('hidden');
+        modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        void modal.offsetHeight;
+        modal.style.visibility = 'visible';
+        modal.style.display = 'block';
+    }
 }
 
 /**
  * Close import modal
  */
 function closeImportModal() {
-    document.getElementById('importModal').style.display = 'none';
+    const modal = document.getElementById('importModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        void modal.offsetHeight;
+    }
 }
 
 /**
@@ -593,11 +740,27 @@ async function importRecipes(event) {
             }
             
             if (response.data.failed_ingredients && response.data.failed_ingredients.length > 0) {
-                resultsHtml += '<h5>Failed Ingredients:</h5><ul>';
+                resultsHtml += '<h5>Failed Ingredients (' + response.data.failed_ingredients.length + '):</h5>';
+                resultsHtml += '<button class="btn btn-primary btn-small" onclick="downloadFailedIngredientsCSV()" style="margin-bottom: 1rem;">Download Failed Ingredients as CSV</button>';
+                resultsHtml += '<table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">';
+                resultsHtml += '<thead><tr><th style="border: 1px solid #ddd; padding: 0.5rem;">Short Name</th><th style="border: 1px solid #ddd; padding: 0.5rem;">Name</th><th style="border: 1px solid #ddd; padding: 0.5rem;">Quantity</th><th style="border: 1px solid #ddd; padding: 0.5rem;">Available Balance</th><th style="border: 1px solid #ddd; padding: 0.5rem;">Batch Number</th><th style="border: 1px solid #ddd; padding: 0.5rem;">Recipe</th><th style="border: 1px solid #ddd; padding: 0.5rem;">Date</th><th style="border: 1px solid #ddd; padding: 0.5rem;">Reason</th></tr></thead><tbody>';
                 response.data.failed_ingredients.forEach(ing => {
-                    resultsHtml += `<li>${ing.short_name}: ${ing.reason}</li>`;
+                    resultsHtml += `<tr>
+                        <td style="border: 1px solid #ddd; padding: 0.5rem;">${ing.short_name || ''}</td>
+                        <td style="border: 1px solid #ddd; padding: 0.5rem;">${ing.name || ''}</td>
+                        <td style="border: 1px solid #ddd; padding: 0.5rem;">${ing.quantity || ''}</td>
+                        <td style="border: 1px solid #ddd; padding: 0.5rem;">${ing.available_balance !== undefined ? ing.available_balance : 'N/A'}</td>
+                        <td style="border: 1px solid #ddd; padding: 0.5rem;">${ing.batch_number || ''}</td>
+                        <td style="border: 1px solid #ddd; padding: 0.5rem;">${ing.recipe_name || ''}</td>
+                        <td style="border: 1px solid #ddd; padding: 0.5rem;">${ing.recipe_date || ''}</td>
+                        <td style="border: 1px solid #ddd; padding: 0.5rem;">${ing.reason || ''}</td>
+                    </tr>`;
                 });
-                resultsHtml += '</ul>';
+                resultsHtml += '</tbody></table>';
+                
+                window.failedIngredientsData = response.data.failed_ingredients;
+            } else {
+                window.failedIngredientsData = [];
             }
             
             document.getElementById('importResults').innerHTML = resultsHtml;
@@ -625,6 +788,49 @@ function showSuccess(message) {
  */
 function showError(message) {
     alert(message); // You can replace this with a better notification system
+}
+
+/**
+ * Download failed ingredients as CSV
+ */
+function downloadFailedIngredientsCSV() {
+    if (!window.failedIngredientsData || window.failedIngredientsData.length === 0) {
+        showError('No failed ingredients to download');
+        return;
+    }
+
+    const headers = ['Short Name', 'Name', 'Quantity', 'Available Balance', 'Batch Number', 'Recipe Name', 'Recipe Date', 'Reason'];
+    const rows = window.failedIngredientsData.map(ing => [
+        ing.short_name || '',
+        ing.name || '',
+        ing.quantity || '',
+        ing.available_balance !== undefined ? ing.available_balance : '',
+        ing.batch_number || '',
+        ing.recipe_name || '',
+        ing.recipe_date || '',
+        ing.reason || ''
+    ]);
+
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => {
+            const cellStr = String(cell);
+            if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                return '"' + cellStr.replace(/"/g, '""') + '"';
+            }
+            return cellStr;
+        }).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'failed_ingredients_' + new Date().toISOString().split('T')[0] + '.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // Update navigation functions

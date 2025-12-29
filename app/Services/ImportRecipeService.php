@@ -27,7 +27,6 @@ class ImportRecipeService
         ];
     }
 
-
     private function processFilesRecursive($files, array &$results, array &$allFailedIngredients): void
     {
         foreach ($files as $fileKey => $file) {
@@ -42,7 +41,6 @@ class ImportRecipeService
             }
         }
     }
-
 
     public function processFile(UploadedFileInterface $file): array
     {
@@ -100,20 +98,46 @@ class ImportRecipeService
                     $item = Item::where('short_name', $itemName)->first();
 
                     if (! $item) {
-                        $item = Item::create([
-                            'short_name' => $itemName,
-                            'name' => $itemName,
-                            'balance' => 0.0,
-                            'unit' => 'pcs',
-                        ]);
-
                         $failedIngredients[] = [
                             'short_name' => $itemName,
                             'name' => $itemName,
                             'quantity' => $quantity,
                             'batch_number' => $batchNumber,
-                            'reason' => 'Item not found, created automatically',
+                            'reason' => 'Item not found in database',
+                            'recipe_name' => $product,
+                            'recipe_date' => $date,
                         ];
+
+                        continue;
+                    }
+
+                    if ($quantity <= 0) {
+                        $failedIngredients[] = [
+                            'short_name' => $itemName,
+                            'name' => $item->name,
+                            'quantity' => $quantity,
+                            'batch_number' => $batchNumber,
+                            'reason' => 'Invalid quantity (must be greater than 0)',
+                            'recipe_name' => $product,
+                            'recipe_date' => $date,
+                        ];
+
+                        continue;
+                    }
+
+                    if ((float) $item->balance < $quantity) {
+                        $failedIngredients[] = [
+                            'short_name' => $itemName,
+                            'name' => $item->name,
+                            'quantity' => $quantity,
+                            'available_balance' => (float) $item->balance,
+                            'batch_number' => $batchNumber,
+                            'reason' => "Insufficient balance. Available: {$item->balance}, Required: {$quantity}",
+                            'recipe_name' => $product,
+                            'recipe_date' => $date,
+                        ];
+
+                        continue;
                     }
 
                     $ingredientsData[] = [
@@ -123,6 +147,11 @@ class ImportRecipeService
                 }
 
                 if (! empty($ingredientsData)) {
+                    foreach ($ingredientsData as $ingredientData) {
+                        $item = Item::findOrFail($ingredientData['item_id']);
+                        $item->balance -= (float) $ingredientData['quantity'];
+                        $item->save();
+                    }
                     $recipe->ingredients()->createMany($ingredientsData);
                 }
 
@@ -143,6 +172,71 @@ class ImportRecipeService
                 'message' => $e->getMessage(),
                 'failed_ingredients' => [],
             ];
+        }
+    }
+
+    /**
+     * Parse date from various formats to Y-m-d
+     * Supports formats like: 15/Dec/25, 15/12/25, 2025-12-15, etc.
+     *
+     * @return string Date in Y-m-d format
+     */
+    private function parseDate(string $dateString): string
+    {
+        $dateString = trim($dateString);
+
+        if (empty($dateString)) {
+            return '';
+        }
+
+        $monthNames = [
+            'Jan' => '01', 'Feb' => '02', 'Mar' => '03', 'Apr' => '04',
+            'May' => '05', 'Jun' => '06', 'Jul' => '07', 'Aug' => '08',
+            'Sep' => '09', 'Oct' => '10', 'Nov' => '11', 'Dec' => '12',
+            'January' => '01', 'February' => '02', 'March' => '03', 'April' => '04',
+            'May' => '05', 'June' => '06', 'July' => '07', 'August' => '08',
+            'September' => '09', 'October' => '10', 'November' => '11', 'December' => '12',
+        ];
+
+        if (preg_match('/^(\d{1,2})\/([A-Za-z]{3,})\/(\d{2,4})$/', $dateString, $matches)) {
+            $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            $monthName = ucfirst(strtolower($matches[2]));
+            $year = $matches[3];
+
+            if (isset($monthNames[$monthName])) {
+                $month = $monthNames[$monthName];
+
+                if (strlen($year) === 2) {
+                    $year = '20'.$year;
+                }
+
+                return "{$year}-{$month}-{$day}";
+            }
+        }
+
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/', $dateString, $matches)) {
+            $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+            $year = $matches[3];
+
+            if (strlen($year) === 2) {
+                $year = '20'.$year;
+            }
+
+            return "{$year}-{$month}-{$day}";
+        }
+
+        $date = \DateTime::createFromFormat('Y-m-d', $dateString);
+        if ($date && $date->format('Y-m-d') === $dateString) {
+            return $dateString;
+        }
+
+        try {
+            $date = new \DateTime($dateString);
+
+            return $date->format('Y-m-d');
+        } catch (\Exception $e) {
+            return '';
         }
     }
 
@@ -277,6 +371,7 @@ class ImportRecipeService
                 if (! empty($item)) {
                     $date = preg_replace('/^DATE:\s*/i', '', $item);
                     if (! empty($date)) {
+                        $date = $this->parseDate($date);
                         break;
                     }
                 }
@@ -314,17 +409,10 @@ class ImportRecipeService
 
     private function saveTemporaryFile(UploadedFileInterface $file): string
     {
-        $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.uniqid('excel_', true).'.xlsx';
+        $tempDir = sys_get_temp_dir();
+        $tempFilePath = $tempDir.DIRECTORY_SEPARATOR.uniqid('upload_', true).'.xlsx';
+        $file->moveTo($tempFilePath);
 
-        $stream = $file->getStream();
-        $handle = fopen($tempPath, 'w');
-
-        while (! $stream->eof()) {
-            fwrite($handle, $stream->read(8192));
-        }
-
-        fclose($handle);
-
-        return $tempPath;
+        return $tempFilePath;
     }
 }

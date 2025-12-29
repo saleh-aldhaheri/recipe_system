@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
  * Load items from API
  * This function makes an AJAX GET request to fetch items
  * 
- * ملاحظة: في وضع MVC، نرسل AJAX request إلى نفس الصفحة (items.php)
- * Controller يكتشف أنه AJAX request ويرجع JSON بدلاً من HTML
+ * Note: In MVC mode, we send AJAX request to the same page (/items)
+ * Controller detects it's an AJAX request and returns JSON instead of HTML
  */
 async function loadItems() {
     try {
@@ -26,7 +26,7 @@ async function loadItems() {
         document.getElementById('itemsTableContainer').innerHTML = `
             <div class="loading">
                 <div class="spinner"></div>
-                <p>جاري تحميل العناصر...</p>
+                <p>Loading Items...</p>
             </div>
         `;
 
@@ -54,17 +54,17 @@ async function loadItems() {
             // Display pagination
             displayPagination(response.pagination);
         } else {
-            showError('فشل تحميل العناصر');
+            showError('Failed to load the items');
         }
     } catch (error) {
         console.error('Error loading items:', error);
-        showError(error.message || 'فشل تحميل العناصر');
+        showError(error.message || 'Failed to load the items');
         
         // Show error message in table container
         document.getElementById('itemsTableContainer').innerHTML = `
             <div class="text-center" style="padding: 2rem; color: #e74c3c;">
-                <p>خطأ: ${error.message}</p>
-                <button class="btn btn-primary mt-1" onclick="loadItems()">إعادة المحاولة</button>
+                <p>Error: ${error.message}</p>
+                <button class="btn btn-primary mt-1" onclick="loadItems()">Try Again</button>
             </div>
         `;
     }
@@ -173,8 +173,8 @@ function displayPagination(pagination) {
     // Show page info
     html += `
         <span style="margin-left: 1rem; padding: 0.5rem;">
-            الصفحة ${pagination.current_page} من ${pagination.last_page} 
-            (الإجمالي: ${pagination.total} عنصر)
+            Page ${pagination.current_page} of ${pagination.last_page} 
+            (Total: ${pagination.total} items)
         </span>
     `;
 
@@ -235,11 +235,11 @@ function closeItemModal() {
 async function editItem(id) {
     try {
         // Show loading in modal
-        document.getElementById('modalTitle').textContent = 'جاري التحميل...';
+        document.getElementById('modalTitle').textContent = 'Loading...';
         document.getElementById('itemModal').style.display = 'block';
 
         // Make AJAX GET request to fetch item details
-        // في وضع MVC: نستخدم route API مباشرة
+        // In MVC mode: use API route directly
         const response = await apiGet(`/items/${id}`);
 
         if (response.success) {
@@ -316,7 +316,7 @@ async function saveItem(event) {
  */
 async function deleteItem(id) {
     // Confirm deletion
-    if (!confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
+    if (!confirm('Are you sure you want to delete this item?')) {
         return;
     }
 

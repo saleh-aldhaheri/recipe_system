@@ -10,6 +10,7 @@ use App\Requests\RecipesRequests\ShowRecipesRequest;
 use App\Requests\RecipesRequests\StoreRecipeRequest;
 use App\Requests\RecipesRequests\UpdateRecipeRequest;
 use App\Services\ImportRecipeService;
+use App\Services\ingredientsService;
 use Illuminate\Database\Capsule\Manager as DB;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -71,48 +72,22 @@ class RecipesController extends BaseController
     {
         $validated = (new StoreRecipeRequest(new StoreIngredientsRequest))->validate($request);
 
-        $recipe = DB::connection()->transaction(function () use ($validated) {
-
-            $existingRecipe = Recipe::where('date', $validated['date'])->first();
-            if ($existingRecipe) {
-                throw new \App\Exceptions\ValidationException([
-                    'date' => 'A recipe already exists for this date. Only one recipe per date is allowed.',
-                ]);
-            }
+        $data = DB::connection()->transaction(function () use ($validated) {
 
             $recipe = Recipe::create([
                 'name' => $validated['name'],
                 'date' => $validated['date'],
             ]);
 
-            if (! empty($validated['ingredients'])) {
-                $ingredientRequest = new StoreIngredientsRequest(false);
-                $ingredientsData = [];
+            $failed = (new ingredientsService)->storeIngredients($validated['ingredients']);
 
-                foreach ($validated['ingredients'] as $ingredient) {
-                    $validatedIngredient = $ingredientRequest->validateData($ingredient);
-                    $ingredientsData[] = $validatedIngredient;
-
-                    $item = Item::findOrFail($validatedIngredient['item_id']);
-                    if ((float) $item->balance < (float) $validatedIngredient['quantity']) {
-                        throw new \App\Exceptions\ValidationException([
-                            'ingredients' => "Insufficient balance for item '{$item->name}'. Available: {$item->balance}, Required: {$validatedIngredient['quantity']}",
-                        ]);
-                    }
-                    $item->balance -= (float) $validatedIngredient['quantity'];
-                    $item->save();
-                }
-
-                $recipe->ingredients()->createMany($ingredientsData);
-            }
-
-            return $recipe->load('ingredients.item');
+            return ['recipe' => $recipe->load('ingredients.item'), 'failed' => $failed];
         });
 
         return jsonResponse($response, [
             'success' => true,
             'message' => 'Recipe created successfully',
-            'data' => $recipe,
+            'data' => $data,
         ], 201);
     }
 
@@ -210,19 +185,7 @@ class RecipesController extends BaseController
     {
         $id = (int) $args['id'];
         $recipe = Recipe::with('ingredients')->findOrFail($id);
-
-        DB::connection()->transaction(function () use ($recipe) {
-
-            foreach ($recipe->ingredients as $ingredient) {
-                $item = Item::find($ingredient->item_id);
-                if ($item) {
-                    $item->balance += (float) $ingredient->quantity;
-                    $item->save();
-                }
-            }
-
-            $recipe->delete();
-        });
+        $recipe->delete();
 
         return jsonResponse($response, [
             'success' => true,

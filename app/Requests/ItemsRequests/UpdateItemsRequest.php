@@ -33,7 +33,7 @@ class UpdateItemsRequest implements RequestInterface
         if (isset($data['name'])) {
             if (empty($data['name'])) {
                 $errors['name'] = 'Name cannot be empty';
-            } elseif (strlen($data['name']) < 3) {
+            } elseif (strlen($data['name']) < 2) {
                 $errors['name'] = 'Name must be at least 3 characters';
             } elseif (strlen($data['name']) > 255) {
                 $errors['name'] = 'Name must be less than 255 characters';
