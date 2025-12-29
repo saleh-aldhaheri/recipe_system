@@ -30,26 +30,24 @@ class Ingredient extends Model
 
     protected static function boot()
     {
+        parent::boot();
+
         static::created(function (Ingredient $ingredient) {
+            $ingredient->load('item');
             $ingredientService = new ingredientsService;
             $ingredientService->checkItem($ingredient);
             $ingredientService->updateItemOnCreate($ingredient);
         });
 
         static::updated(function (Ingredient $ingredient) {
+            $ingredient->load('item');
             $ingredientService = new ingredientsService;
-            $ingredientService->checkItem($ingredient);
             $ingredientService->updateItemOnUpdate($ingredient);
         });
 
         static::deleted(function (Ingredient $ingredient) {
+            $ingredient->load('item');
             (new ingredientsService)->updateItemOnDelete($ingredient);
-        });
-
-        static::saved(function (Ingredient $ingredient) {
-            $ingredientService = new ingredientsService;
-            $ingredientService->checkItem($ingredient);
-            $ingredientService->updateItemOnCreate($ingredient);
         });
     }
 }

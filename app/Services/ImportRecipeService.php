@@ -147,12 +147,8 @@ class ImportRecipeService
                 }
 
                 if (! empty($ingredientsData)) {
-                    foreach ($ingredientsData as $ingredientData) {
-                        $item = Item::findOrFail($ingredientData['item_id']);
-                        $item->balance -= (float) $ingredientData['quantity'];
-                        $item->save();
-                    }
-                    $recipe->ingredients()->createMany($ingredientsData);
+                    $ingredientsService = new \App\Services\ingredientsService();
+                    $ingredientsService->storeIngredients($ingredientsData, $recipe->id);
                 }
 
                 return [

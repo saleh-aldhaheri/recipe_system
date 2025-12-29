@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Exceptions\ValidationException;
 use App\Models\Ingredient;
 use App\Models\Item;
-use Illuminate\Database\Capsule\Manager as DB;
+use App\Models\Recipe;
 
 class ingredientsService
 {
@@ -56,8 +56,15 @@ class ingredientsService
         }
 
         if ($oldItem->id === $newItem->id) {
-
             $diff = $newQuantity - $oldQuantity;
+            $availableBalance = (float) $newItem->balance + $oldQuantity;
+
+            if ($newQuantity > $availableBalance) {
+                throw new ValidationException([
+                    'quantity' => "Insufficient balance. Available: {$availableBalance}, Required: {$newQuantity}",
+                ]);
+            }
+
             $newItem->balance -= $diff;
             $newItem->save();
 
@@ -67,56 +74,57 @@ class ingredientsService
         $oldItem->balance += $oldQuantity;
         $oldItem->save();
 
+        if ($newQuantity > (float) $newItem->balance) {
+            throw new ValidationException([
+                'quantity' => "Insufficient balance for item '{$newItem->name}'. Available: {$newItem->balance}, Required: {$newQuantity}",
+            ]);
+        }
+
         $newItem->balance -= $newQuantity;
         $newItem->save();
     }
 
-    public function storeIngredients(array $ingredients)
+    public function storeIngredients(array $ingredients, int $recipeId): array
     {
-        $errors = DB::connection()->transaction(function () use ($ingredients) {
-            foreach ($ingredients as $ingredient) {
+        $failed = [];
+
+        foreach ($ingredients as $ingredient) {
+            try {
+                $ingredient['recipe_id'] = $recipeId;
+                Ingredient::create($ingredient);
+            } catch (\Throwable $e) {
+                $failed[] = [
+                    'item_id' => $ingredient['item_id'] ?? null,
+                    'quantity' => $ingredient['quantity'] ?? null,
+                    'reason' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return $failed;
+    }
+
+    public function updateRecipeIngredients(Recipe $recipe, array $newIngredients): array
+    {
+        $failed = [];
+
+        $recipe->ingredients()->delete();
+
+        if (! empty($newIngredients)) {
+            foreach ($newIngredients as $ingredient) {
                 try {
+                    $ingredient['recipe_id'] = $recipe->id;
                     Ingredient::create($ingredient);
-                } catch (ValidationException $e) {
-                    $error[] = [
-                        'message' => $e,
-                        'ingredient' => $ingredient,
+                } catch (\Throwable $e) {
+                    $failed[] = [
+                        'item_id' => $ingredient['item_id'] ?? null,
+                        'quantity' => $ingredient['quantity'] ?? null,
+                        'reason' => $e->getMessage(),
                     ];
                 }
             }
-        });
-
-        return $errors;
-    }
-    
-    public function deleteIngredients(array  $ingredients)  
-    { 
-        try{  
-          DB::connection()->transaction(function() use($ingredients) {  
-              foreach($ingredients as $ingredient) { 
-                 Ingredient::deleted($ingredient); 
-              }
-          });  
-        }catch(ValidationException $e) { 
-         
         }
 
+        return $failed;
     }
-    // public function updateIngredients(array $ingredients) {
-    //      $errors = DB::connection()->transaction(function() use ($ingredients) {
-    //         foreach($ingredients as $ingredient) {
-    //             try {
-    //                 $Oldingredient
-    //                 Ingredient::updated($ingredient);
-    //             }catch (Throwable $e) {
-    //                 $error[] = [
-    //                     'message' =>  $e,
-    //                     'ingredient' => $ingredient
-    //                 ];
-    //             }
-    //         }
-    //    });
-
-    //    return $errors;
-    // }
 }
