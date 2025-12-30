@@ -24,7 +24,7 @@ class ItemsService
                     $operation = $item->balance > $oldBalance ? '+' : '-';
                     (new TransactionsService)->createTransaction(
                         $item,
-                        TransactionTypeEnum::RECIPE_USAGE,
+                        TransactionTypeEnum::UPDATE_ITEM,
                         $diff,
                         $operation,
                         $oldBalance

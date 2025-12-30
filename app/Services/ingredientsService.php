@@ -37,7 +37,7 @@ class ingredientsService
             $ingredient->recipe->id
         );
         $item->balance = $item->balance - $ingredient->quantity;
-        $item->saveQuietly();
+        $item->save();
     }
 
     public function updateItemOnDelete(Ingredient $ingredient)
@@ -53,7 +53,7 @@ class ingredientsService
             $ingredient->recipe->id
         );
         $item->balance = $item->balance + $ingredient->quantity;
-        $item->saveQuietly();
+        $item->save();
     }
 
     public function updateItemOnUpdate(Ingredient $ingredient)

@@ -34,24 +34,16 @@ class Ingredient extends Model
 
         static::creating(function (Ingredient $ingredient) {
             $ingredient->load('item');
-            if (! $ingredient->item) {
-                $item = Item::find($ingredient->item_id);
-                if ($item) {
-                    $ingredient->setRelation('item', $item);
-                }
-            }
             $ingredientService = new ingredientsService;
             $ingredientService->checkItem($ingredient);
+            $ingredientService->updateItemOnCreate($ingredient); 
         });
 
         static::updating(function (Ingredient $ingredient) {
             $ingredient->load('item');
-            if (! $ingredient->item) {
-                $item = Item::find($ingredient->item_id);
-                if ($item) {
-                    $ingredient->setRelation('item', $item);
-                }
-            }
+            $ingredientService = new ingredientsService;
+            $ingredientService->checkItem($ingredient);
+            $ingredientService->updateItemOnUpdate($ingredient); 
         });
 
         static::deleting(function (Ingredient $ingredient) {

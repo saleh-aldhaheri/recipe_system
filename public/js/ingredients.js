@@ -395,18 +395,14 @@ async function saveIngredient(event) {
             // Update ingredient
             response = await apiPut(`/ingredients/${ingredientId}`, ingredientData);
             
-            // Update item balance
-            if (response.success) {
-                await updateItemBalance(originalItemId, originalQuantity, newItemId, newQuantity);
-            }
+            // Item balance is automatically updated by Ingredient model boot events
+            // No need to manually update via API
         } else {
             // Create ingredient
             response = await apiPost('/ingredients', ingredientData);
             
-            // Deduct from item balance
-            if (response.success) {
-                await deductFromItemBalance(newItemId, newQuantity);
-            }
+            // Item balance is automatically updated by Ingredient model boot events
+            // No need to manually update via API
         }
 
         if (response.success) {
@@ -522,22 +518,9 @@ async function deleteIngredient(id) {
         const response = await apiDelete(`/ingredients/${id}`);
 
         if (response.success) {
-            // Add back quantity to item balance
-            if (ingredient.item_id) {
-                try {
-                    const itemResponse = await apiGet(`/items/${ingredient.item_id}`);
-                    if (itemResponse.success) {
-                        const item = itemResponse.data;
-                        const newBalance = item.balance + ingredient.quantity;
-                        await apiPatch(`/items/${ingredient.item_id}`, {
-                            balance: newBalance
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error updating item balance:', error);
-                }
-            }
-
+            // Item balance is automatically updated by Ingredient model boot events
+            // No need to manually update via API
+            
             showSuccess(response.message || 'Ingredient deleted successfully');
             loadIngredients();
             loadItems(); // Reload items to show updated balances
