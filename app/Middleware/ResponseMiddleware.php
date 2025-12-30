@@ -17,64 +17,64 @@ class ResponseMiddleware implements MiddlewareInterface
 {
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        try {
+        // try {
             $response = $handler->handle($request);
 
             return $response;
-        } catch (ValidationException $e) {
-            $response = new Response;
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'errors' => $e->getErrors(),
-            ], JSON_PRETTY_PRINT));
+    //     } catch (ValidationException $e) {
+    //         $response = new Response;
+    //         $response->getBody()->write(json_encode([
+    //             'success' => false,
+    //             'message' => $e->getMessage(),
+    //             'errors' => $e->getErrors(),
+    //         ], JSON_PRETTY_PRINT));
 
-            return $response
-                ->withStatus(422)
-                ->withHeader('Content-Type', 'application/json');
+    //         return $response
+    //             ->withStatus(422)
+    //             ->withHeader('Content-Type', 'application/json');
 
-        } catch (HttpException $e) {
-            $response = new Response;
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ]), JSON_PRETTY_PRINT);
+    //     } catch (HttpException $e) {
+    //         $response = new Response;
+    //         $response->getBody()->write(json_encode([
+    //             'success' => false,
+    //             'message' => $e->getMessage(),
+    //         ]), JSON_PRETTY_PRINT);
 
-            return $response->withStatus($e->getCode())
-                ->withHeader('Content-Type', 'application/json');
-        } catch (ModelNotFoundException $e) {
-            $response = new Response;
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'message' => 'Resource not found',
-            ], JSON_PRETTY_PRINT));
+    //         return $response->withStatus($e->getCode())
+    //             ->withHeader('Content-Type', 'application/json');
+    //     } catch (ModelNotFoundException $e) {
+    //         $response = new Response;
+    //         $response->getBody()->write(json_encode([
+    //             'success' => false,
+    //             'message' => 'Resource not found',
+    //         ], JSON_PRETTY_PRINT));
 
-            return $response
-                ->withStatus(404)
-                ->withHeader('Content-Type', 'application/json');
+    //         return $response
+    //             ->withStatus(404)
+    //             ->withHeader('Content-Type', 'application/json');
 
-        } catch (QueryException $e) {
-            $response = new Response;
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'message' => 'Database error occurred',
-            ], JSON_PRETTY_PRINT));
+    //     } catch (QueryException $e) {
+    //         $response = new Response;
+    //         $response->getBody()->write(json_encode([
+    //             'success' => false,
+    //             'message' => 'Database error occurred',
+    //         ], JSON_PRETTY_PRINT));
 
-            return $response
-                ->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+    //         return $response
+    //             ->withStatus(500)
+    //             ->withHeader('Content-Type', 'application/json');
 
-        } catch (Throwable $e) {
-            $response = new Response;
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'message' => 'An error occurred',
-                'error' => $e->getMessage(),
-            ], JSON_PRETTY_PRINT));
+    //     } catch (Throwable $e) {
+    //         $response = new Response;
+    //         $response->getBody()->write(json_encode([
+    //             'success' => false,
+    //             'message' => 'An error occurred',
+    //             'error' => $e->getMessage(),
+    //         ], JSON_PRETTY_PRINT));
 
-            return $response
-                ->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
-        }
+    //         return $response
+    //             ->withStatus(500)
+    //             ->withHeader('Content-Type', 'application/json');
+    //     }
     }
 }

@@ -6,7 +6,7 @@ abstract class BaseController
 {
     protected function Paginate($query, int $page, int $perPage, ?string $orderBy = null): array
     {
-        $total = $query->count();
+        $total = $query->count() ?: 1 / $perPage;
 
         if (! empty($orderBy)) {
             $query = $query->orderBy($orderBy);

@@ -90,7 +90,7 @@ function displayItems(items) {
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>#</th>
                         <th>Short Name</th>
                         <th>Name</th>
                         <th>Balance</th>
@@ -102,10 +102,11 @@ function displayItems(items) {
     `;
 
     // Loop through items and create table rows
-    items.forEach(item => {
+    items.forEach((item, index) => {
+        const rowNumber = (currentPage - 1) * currentPerPage + index + 1;
         html += `
             <tr>
-                <td>${item.id}</td>
+                <td>${rowNumber}</td>
                 <td>${item.short_name}</td>
                 <td>${item.name}</td>
                 <td>${item.balance}</td>

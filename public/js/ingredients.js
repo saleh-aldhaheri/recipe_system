@@ -163,7 +163,7 @@ function displayIngredients(ingredients) {
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>#</th>
                         <th>Recipe</th>
                         <th>Item</th>
                         <th>Quantity</th>
@@ -173,10 +173,11 @@ function displayIngredients(ingredients) {
                 <tbody>
     `;
 
-    ingredients.forEach(ingredient => {
+    ingredients.forEach((ingredient, index) => {
+        const rowNumber = (currentPage - 1) * currentPerPage + index + 1;
         html += `
             <tr>
-                <td>${ingredient.id}</td>
+                <td>${rowNumber}</td>
                 <td>${ingredient.recipe ? ingredient.recipe.name : 'N/A'}</td>
                 <td>${ingredient.item ? `${ingredient.item.short_name} - ${ingredient.item.name}` : 'N/A'}</td>
                 <td>${ingredient.quantity}</td>

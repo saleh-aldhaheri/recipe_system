@@ -3,6 +3,7 @@
 use App\Controllers\IngredientsController;
 use App\Controllers\ItemsController;
 use App\Controllers\RecipesController;
+use App\Controllers\TransactionsController;
 use App\Middleware\ImportMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -48,3 +49,5 @@ $app->group('/ingredients', function (RouteCollectorProxy $group) {
     $group->patch('/{id}', [IngredientsController::class, 'update']);
     $group->delete('/{id}', [IngredientsController::class, 'destroy']);
 });
+
+$app->get('/transactions', [TransactionsController::class, 'index']);

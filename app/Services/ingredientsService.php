@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TransactionTypeEnum;
 use App\Exceptions\ValidationException;
 use App\Models\Ingredient;
 use App\Models\Item;
@@ -26,15 +27,33 @@ class ingredientsService
     public function updateItemOnCreate(Ingredient $ingredient)
     {
         $item = $ingredient->item;
+        $balanceBefore = $item->balance;
+        (new TransactionsService)->createTransaction(
+            $item,
+            TransactionTypeEnum::RECIPE_USAGE,
+            $ingredient->quantity,
+            '-',
+            $balanceBefore,
+            $ingredient->recipe->id
+        );
         $item->balance = $item->balance - $ingredient->quantity;
-        $item->save();
+        $item->saveQuietly();
     }
 
     public function updateItemOnDelete(Ingredient $ingredient)
     {
         $item = $ingredient->item;
+        $balanceBefore = $item->balance;
+        (new TransactionsService)->createTransaction(
+            $item,
+            TransactionTypeEnum::RECIPE_USAGE,
+            $ingredient->quantity,
+            '+',
+            $balanceBefore,
+            $ingredient->recipe->id
+        );
         $item->balance = $item->balance + $ingredient->quantity;
-        $item->save();
+        $item->saveQuietly();
     }
 
     public function updateItemOnUpdate(Ingredient $ingredient)
@@ -56,7 +75,9 @@ class ingredientsService
         }
 
         if ($oldItem->id === $newItem->id) {
-            $diff = $newQuantity - $oldQuantity;
+            $newItem->refresh();
+
+            $diff = $oldQuantity - $newQuantity;
             $availableBalance = (float) $newItem->balance + $oldQuantity;
 
             if ($newQuantity > $availableBalance) {
@@ -65,13 +86,42 @@ class ingredientsService
                 ]);
             }
 
-            $newItem->balance -= $diff;
-            $newItem->save();
+            if (abs($diff) > 0.001) {
+                $operation = $diff > 0 ? '+' : '-';
+                $transactionQuantity = abs($diff);
+                
+                $balanceBefore = (float) $newItem->balance;
+                
+                $newItem->balance += $diff;
+                $newItem->save();
+                
+                $newItem->refresh();
+                
+                (new TransactionsService)->createTransaction(
+                    $newItem,
+                    TransactionTypeEnum::RECIPE_USAGE,
+                    $transactionQuantity,
+                    $operation,
+                    $balanceBefore,
+                    $ingredient->recipe->id
+                );
+            }
 
             return;
         }
 
+        $oldItemBalanceBefore = $oldItem->balance;
         $oldItem->balance += $oldQuantity;
+
+        (new TransactionsService)->createTransaction(
+            $oldItem,
+            TransactionTypeEnum::RECIPE_USAGE,
+            $oldQuantity,
+            '+',
+            $oldItemBalanceBefore,
+            $ingredient->recipe->id
+        );
+
         $oldItem->save();
 
         if ($newQuantity > (float) $newItem->balance) {
@@ -80,7 +130,18 @@ class ingredientsService
             ]);
         }
 
+        $newItemBalanceBefore = $newItem->balance;
         $newItem->balance -= $newQuantity;
+
+        (new TransactionsService)->createTransaction(
+            $newItem,
+            TransactionTypeEnum::RECIPE_USAGE,
+            $newQuantity,
+            '-',
+            $newItemBalanceBefore,
+            $ingredient->recipe->id
+        );
+
         $newItem->save();
     }
 

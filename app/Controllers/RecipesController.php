@@ -40,7 +40,7 @@ class RecipesController extends BaseController
             ]);
         }
 
-        $html = view('recipes.calendar', [
+        $html = view('recipes.index', [
             'title' => 'Recipes Calendar',
             'currentPage' => 'recipes',
             'recipes' => $recipes['data'],
@@ -178,7 +178,7 @@ class RecipesController extends BaseController
         $recipe = Recipe::with('ingredients')->findOrFail($id);
 
         DB::connection()->transaction(function () use ($recipe) {
-            $ingredientsService = new ingredientsService();
+            $ingredientsService = new ingredientsService;
             foreach ($recipe->ingredients as $ingredient) {
                 $ingredientsService->updateItemOnDelete($ingredient);
             }

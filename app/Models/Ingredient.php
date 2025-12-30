@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Services\ingredientsService;
-use App\Models\Item;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

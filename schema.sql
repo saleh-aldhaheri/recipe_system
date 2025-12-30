@@ -1,6 +1,6 @@
 -- Database Schema for Recipe Management System
 -- Tables: items, recipe, ingredients
-
+USE FOOD_PRODUCT; 
 -- Create items table
 CREATE TABLE IF NOT EXISTS `items` (
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -49,3 +49,17 @@ CREATE TABLE IF NOT EXISTS `ingredients` (
     UNIQUE KEY `unique_recipe_item` (`recipe_id`, `item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `transactions`(
+    id INT NOT NULL AUTO_INCREMENT,
+    `item_id` INT(11) UNSIGNED NOT NULL,
+    `recipe_id` INT(11) UNSIGNED NULL,
+    `qty_used` DECIMAL(10,2) NOT NULL, 
+    `operation` CHAR(1), 
+    `balance_before` DECIMAL(10,2) NOT NULL, 
+    `balance_after` DECIMAL(10,2) NOT NULL, 
+    `type` ENUM('update item','recipe usage') NOT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_recipe_id` (`recipe_id`),
+    KEY `idx_item_id` (`item_id`)
+) 

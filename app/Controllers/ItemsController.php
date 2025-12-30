@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Requests\ItemsRequests\ShowItemsRequest;
 use App\Requests\ItemsRequests\StoreItemsRequest;
 use App\Requests\ItemsRequests\UpdateItemsRequest;
+use App\Services\ItemsService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -80,11 +81,12 @@ class ItemsController extends BaseController
     public function update(Request $request, Response $response, array $args): Response
     {
         $id = (int) $args['id'];
+
         $item = Item::findOrFail($id);
+
         $validatedData = (new UpdateItemsRequest($id))->validate($request);
 
-        $item->update($validatedData);
-        $item->refresh();
+        (new ItemsService)->updateItem($item, $validatedData);
 
         return jsonResponse($response, [
             'success' => true,

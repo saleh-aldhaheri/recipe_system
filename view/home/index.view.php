@@ -23,6 +23,12 @@
         <p>Create and manage recipe ingredients. Automatically track item balances when ingredients are used.</p>
         <a href="<?= url('ingredients') ?>" class="btn btn-primary">Go to Ingredients</a>
     </div>
+
+    <div class="feature-card">
+        <h3>🥘 View Transactions</h3>
+        <p>Track operations on your stock at any time frame.</p>
+        <a href="<?= url('transactions') ?>" class="btn btn-primary">Go to Transactions</a>
+    </div>
 </div>
 
 <!-- Quick Info -->

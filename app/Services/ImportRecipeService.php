@@ -147,7 +147,7 @@ class ImportRecipeService
                 }
 
                 if (! empty($ingredientsData)) {
-                    $ingredientsService = new \App\Services\ingredientsService();
+                    $ingredientsService = new \App\Services\ingredientsService;
                     $ingredientsService->storeIngredients($ingredientsData, $recipe->id);
                 }
 

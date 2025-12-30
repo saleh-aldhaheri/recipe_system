@@ -33,7 +33,7 @@ function view(string $view, array $data = [], ?string $layout = 'main'): string
 
     ob_start();
 
-    $viewPath = BASE.'view'.DIRECTORY_SEPARATOR.str_replace('.', DIRECTORY_SEPARATOR, $view).'.php';
+    $viewPath = BASE.'view'.DIRECTORY_SEPARATOR.str_replace('.', DIRECTORY_SEPARATOR, $view).'.view'.'.php';
 
     if (! file_exists($viewPath)) {
         throw new \Exception("View not found: {$view}");
@@ -44,7 +44,7 @@ function view(string $view, array $data = [], ?string $layout = 'main'): string
     $content = ob_get_clean();
 
     if ($layout) {
-        $layoutPath = BASE.'view'.DIRECTORY_SEPARATOR.'layouts'.DIRECTORY_SEPARATOR.$layout.'.php';
+        $layoutPath = BASE.'view'.DIRECTORY_SEPARATOR.'layouts'.DIRECTORY_SEPARATOR.$layout.'.view'.'.php';
 
         if (! file_exists($layoutPath)) {
             throw new \Exception("Layout not found: {$layout}");
