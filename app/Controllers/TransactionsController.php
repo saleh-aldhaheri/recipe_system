@@ -10,13 +10,13 @@ class TransactionsController extends BaseController
 {
     public function index(Request $request, Response $response)
     {
-        $params = $request->getQueryParams();
-        $perPage = $params['per_page'] ?? 15;
-        $page = $params['page'] ?? 1;
-        $search = $params['search'] ?? null;
+        $queryParams = $request->getQueryParams();
+        $page = (int) ($queryParams['page'] ?? 1);
+        $perPage = (int) ($queryParams['per_page'] ?? 10);
+        $search = $queryParams['search'] ?? '';
         $query = Transaction::with(['item', 'recipe']);
 
-        if ($search) {
+        if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('type', 'LIKE', "%{$search}%")
                     ->orWhere('operation', 'LIKE', "%{$search}%")
@@ -30,8 +30,7 @@ class TransactionsController extends BaseController
             });
         }
 
-        // Order by created_at descending (newest first) before pagination
-        $query->orderBy('created_at', 'desc');
+        $query->orderByDesc('created_at');
 
         $transactions = $this->Paginate($query, $page, $perPage);
 

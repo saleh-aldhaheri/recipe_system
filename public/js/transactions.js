@@ -6,7 +6,7 @@
 // Current page state
 let currentPage = 1;
 let currentSearch = '';
-let currentPerPage = 15;
+let currentPerPage = 10;
 let searchTimeout = null;
 
 // Initialize page when DOM is loaded
