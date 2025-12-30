@@ -501,7 +501,8 @@ async function updateItemBalance(originalItemId, originalQuantity, newItemId, ne
  * @param {number} id
  */
 async function deleteIngredient(id) {
-    if (!confirm('Are you sure you want to delete this ingredient? The quantity will be added back to the item balance.')) {
+    const confirmed = await confirmAction('Are you sure you want to delete this ingredient? The quantity will be added back to the item balance.', 'Delete Ingredient');
+    if (!confirmed) {
         return;
     }
 

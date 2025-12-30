@@ -3,8 +3,8 @@
  * This file handles weekly calendar display and recipe CRUD operations using AJAX
  */
 
-// Current week start date (Monday)
-let currentWeekStart = getMonday(new Date());
+// Current week start date (Sunday)
+let currentWeekStart = getSunday(new Date());
 let selectedDay = null;
 let allRecipes = []; // Cache all recipes
 let ingredientCounter = 0; // Counter for ingredient rows
@@ -98,12 +98,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Get Monday of the week for a given date
+ * Get Sunday of the week for a given date
  */
-function getMonday(date) {
+function getSunday(date) {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    const diff = d.getDate() - day; // Get Sunday of the week
     return new Date(d.setDate(diff));
 }
 
@@ -120,12 +120,19 @@ function renderCalendar() {
         'July', 'August', 'September', 'October', 'November', 'December'];
     const startMonth = monthNames[weekStart.getMonth()];
     const endMonth = monthNames[weekEnd.getMonth()];
+    const startYear = weekStart.getFullYear();
+    const endYear = weekEnd.getFullYear();
     
-    let weekText = `${startMonth} ${weekStart.getDate()}`;
-    if (weekStart.getMonth() !== weekEnd.getMonth() || weekStart.getFullYear() !== weekEnd.getFullYear()) {
-        weekText += ` - ${endMonth} ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`;
+    let weekText;
+    if (startYear !== endYear) {
+        // Different years: show year for both dates
+        weekText = `${startMonth} ${weekStart.getDate()}, ${startYear} - ${endMonth} ${weekEnd.getDate()}, ${endYear}`;
+    } else if (weekStart.getMonth() !== weekEnd.getMonth()) {
+        // Same year, different months: show year at the end
+        weekText = `${startMonth} ${weekStart.getDate()} - ${endMonth} ${weekEnd.getDate()}, ${startYear}`;
     } else {
-        weekText += ` - ${weekEnd.getDate()}, ${weekStart.getFullYear()}`;
+        // Same month and year: show year at the end
+        weekText = `${startMonth} ${weekStart.getDate()} - ${weekEnd.getDate()}, ${startYear}`;
     }
     
     document.getElementById('currentMonthYear').textContent = weekText;
@@ -138,8 +145,8 @@ function renderCalendar() {
     }
     calendar.innerHTML = '';
 
-    // Add days of the week (Monday to Sunday)
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    // Add days of the week (Sunday to Saturday)
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     
     for (let i = 0; i < 7; i++) {
         const dayDate = new Date(weekStart);
@@ -628,7 +635,8 @@ async function saveRecipe(event) {
  * @param {number} id
  */
 async function deleteRecipe(id) {
-    if (!confirm('Are you sure you want to delete this recipe?')) {
+    const confirmed = await confirmAction('Are you sure you want to delete this recipe? This action cannot be undone.', 'Delete Recipe');
+    if (!confirmed) {
         return;
     }
 
@@ -780,14 +788,22 @@ async function importRecipes(event) {
  * Show success message
  */
 function showSuccess(message) {
-    alert(message); // You can replace this with a better notification system
+    if (typeof notifications !== 'undefined') {
+        notifications.success(message);
+    } else {
+        console.log('Success:', message);
+    }
 }
 
 /**
  * Show error message
  */
 function showError(message) {
-    alert(message); // You can replace this with a better notification system
+    if (typeof notifications !== 'undefined') {
+        notifications.error(message);
+    } else {
+        console.error('Error:', message);
+    }
 }
 
 /**

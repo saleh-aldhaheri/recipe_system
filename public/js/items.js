@@ -316,7 +316,8 @@ async function saveItem(event) {
  */
 async function deleteItem(id) {
     // Confirm deletion
-    if (!confirm('Are you sure you want to delete this item?')) {
+    const confirmed = await confirmAction('Are you sure you want to delete this item? This action cannot be undone.', 'Delete Item');
+    if (!confirmed) {
         return;
     }
 

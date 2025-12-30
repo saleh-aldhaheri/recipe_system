@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($title) ? e($title) : 'Recipe Management System' ?></title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
     <?= isset($styles) ? $styles : '' ?>
 </head>
@@ -24,6 +25,8 @@
 
     <!-- JavaScript -->
     <script src="<?= asset('js/api.js') ?>"></script>
+    <script src="<?= asset('js/notifications.js') ?>"></script>
+    <script src="<?= asset('js/confirm-dialog.js') ?>"></script>
     <?= isset($scripts) ? $scripts : '' ?>
 </body>
 </html>

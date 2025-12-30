@@ -142,7 +142,12 @@ async function apiUpload(url, formData) {
  * @param {string} message - Error message
  */
 function showError(message) {
-    alert('Error: ' + message);
+    if (typeof notifications !== 'undefined') {
+        notifications.error(message);
+    } else {
+        console.error('Error:', message);
+        alert('Error: ' + message);
+    }
 }
 
 /**
@@ -150,6 +155,11 @@ function showError(message) {
  * @param {string} message - Success message
  */
 function showSuccess(message) {
-    alert('Success: ' + message);
+    if (typeof notifications !== 'undefined') {
+        notifications.success(message);
+    } else {
+        console.log('Success:', message);
+        alert('Success: ' + message);
+    }
 }
 
