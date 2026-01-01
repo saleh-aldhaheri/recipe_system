@@ -57,7 +57,10 @@ function formatDateForAPI(date) {
  * Load all dashboard data
  */
 async function loadDashboardData() {
-    currentTimeFrame = document.getElementById('timeFrameSelect').value;
+    const timeFrameSelect = document.getElementById('timeFrameSelect');
+    if (timeFrameSelect) {
+        currentTimeFrame = timeFrameSelect.value;
+    }
     
     try {
         await Promise.all([
@@ -118,13 +121,20 @@ async function loadTableData() {
         if (response.success && response.data && response.data.items) {
             renderItemsTable(response.data.items);
         } else {
-            container.innerHTML = '<p>No items found</p>';
+            container.innerHTML = '<div class="flex flex-col items-center justify-center py-12"><span class="material-symbols-outlined text-4xl text-text-secondary mb-2">inbox</span><p class="text-text-secondary">No items found</p></div>';
         }
     } catch (error) {
         console.error('Error loading table data:', error);
-        container.innerHTML = '<p class="text-danger">Error loading items</p>';
+        const errorMessage = error.message || error.error || 'Failed to load items';
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12">
+                <span class="material-symbols-outlined text-4xl text-red-500 mb-2">error</span>
+                <p class="text-red-500 font-medium mb-1">Error loading items</p>
+                <p class="text-text-secondary text-sm">${escapeHtml(errorMessage)}</p>
+            </div>
+        `;
         if (typeof notifications !== 'undefined') {
-            notifications.error('Failed to load items table');
+            notifications.error('Failed to load items table: ' + errorMessage);
         }
     }
 }
@@ -189,6 +199,29 @@ async function loadChartData(chartType) {
     // Use global time frame selector
     const dates = getTimeFrameDates(currentTimeFrame);
     
+    // Get chart container element
+    let chartContainer;
+    let chartId;
+    
+    switch (chartType) {
+        case 'transactionsByType':
+            chartId = 'transactionsByTypeChart';
+            chartContainer = document.getElementById('transactionsByTypeChart')?.closest('.bg-white');
+            break;
+        case 'topItems':
+            chartId = 'topItemsChart';
+            chartContainer = document.getElementById('topItemsChart')?.closest('.bg-white');
+            break;
+        case 'dailyTrend':
+            chartId = 'dailyTrendChart';
+            chartContainer = document.getElementById('dailyTrendChart')?.closest('.bg-white');
+            break;
+        case 'usageByRecipes':
+            chartId = 'usageByRecipesChart';
+            chartContainer = document.getElementById('usageByRecipesChart')?.closest('.bg-white');
+            break;
+    }
+    
     try {
         let response;
         let data;
@@ -198,6 +231,8 @@ async function loadChartData(chartType) {
                 response = await apiPost('/dashboard/transactions-by-type', dates);
                 if (response.success && response.data) {
                     renderTransactionsByTypeChart(response.data);
+                } else {
+                    showChartError(chartId, chartContainer, 'No data available');
                 }
                 break;
                 
@@ -207,14 +242,26 @@ async function loadChartData(chartType) {
                     limit: 10
                 });
                 if (response.success && response.data && response.data.items) {
-                    renderTopItemsChart(response.data.items);
+                    if (response.data.items.length === 0) {
+                        showChartError(chartId, chartContainer, 'No items data available');
+                    } else {
+                        renderTopItemsChart(response.data.items);
+                    }
+                } else {
+                    showChartError(chartId, chartContainer, 'No data available');
                 }
                 break;
                 
             case 'dailyTrend':
                 response = await apiPost('/dashboard/daily-trend', dates);
                 if (response.success && response.data && response.data.daily_data) {
-                    renderDailyTrendChart(response.data.daily_data);
+                    if (response.data.daily_data.length === 0) {
+                        showChartError(chartId, chartContainer, 'No trend data available');
+                    } else {
+                        renderDailyTrendChart(response.data.daily_data);
+                    }
+                } else {
+                    showChartError(chartId, chartContainer, 'No data available');
                 }
                 break;
                 
@@ -224,13 +271,46 @@ async function loadChartData(chartType) {
                     limit: 10
                 });
                 if (response.success && response.data && response.data.recipes) {
-                    renderUsageByRecipesChart(response.data.recipes);
+                    if (response.data.recipes.length === 0) {
+                        showChartError(chartId, chartContainer, 'No recipes data available');
+                    } else {
+                        renderUsageByRecipesChart(response.data.recipes);
+                    }
+                } else {
+                    showChartError(chartId, chartContainer, 'No data available');
                 }
                 break;
         }
     } catch (error) {
         console.error(`Error loading ${chartType} chart:`, error);
+        const errorMessage = error.message || error.error || 'Failed to load chart data';
+        showChartError(chartId, chartContainer, errorMessage);
     }
+}
+
+/**
+ * Show error message in chart container
+ */
+function showChartError(chartId, chartContainer, message) {
+    if (!chartContainer) return;
+    
+    const canvas = document.getElementById(chartId);
+    if (canvas) {
+        canvas.style.display = 'none';
+    }
+    
+    // Check if error message already exists
+    let errorDiv = chartContainer.querySelector('.chart-error-message');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.className = 'chart-error-message flex flex-col items-center justify-center py-12';
+        chartContainer.appendChild(errorDiv);
+    }
+    
+    errorDiv.innerHTML = `
+        <span class="material-symbols-outlined text-4xl text-text-secondary mb-2">bar_chart</span>
+        <p class="text-text-secondary text-sm">${escapeHtml(message)}</p>
+    `;
 }
 
 /**
@@ -239,6 +319,16 @@ async function loadChartData(chartType) {
 function renderTransactionsByTypeChart(data) {
     const ctx = document.getElementById('transactionsByTypeChart');
     if (!ctx) return;
+    
+    // Show canvas if it was hidden
+    ctx.style.display = 'block';
+    
+    // Remove error message if exists
+    const chartContainer = ctx.closest('.bg-white');
+    const errorDiv = chartContainer?.querySelector('.chart-error-message');
+    if (errorDiv) {
+        errorDiv.remove();
+    }
     
     // Destroy existing chart if it exists
     if (charts.transactionsByType) {
@@ -286,6 +376,16 @@ function renderTransactionsByTypeChart(data) {
 function renderTopItemsChart(items) {
     const ctx = document.getElementById('topItemsChart');
     if (!ctx) return;
+    
+    // Show canvas if it was hidden
+    ctx.style.display = 'block';
+    
+    // Remove error message if exists
+    const chartContainer = ctx.closest('.bg-white');
+    const errorDiv = chartContainer?.querySelector('.chart-error-message');
+    if (errorDiv) {
+        errorDiv.remove();
+    }
     
     if (charts.topItems) {
         charts.topItems.destroy();
@@ -343,6 +443,16 @@ function renderTopItemsChart(items) {
 function renderDailyTrendChart(dailyData) {
     const ctx = document.getElementById('dailyTrendChart');
     if (!ctx) return;
+    
+    // Show canvas if it was hidden
+    ctx.style.display = 'block';
+    
+    // Remove error message if exists
+    const chartContainer = ctx.closest('.bg-white');
+    const errorDiv = chartContainer?.querySelector('.chart-error-message');
+    if (errorDiv) {
+        errorDiv.remove();
+    }
     
     if (charts.dailyTrend) {
         charts.dailyTrend.destroy();
@@ -405,6 +515,16 @@ function renderDailyTrendChart(dailyData) {
 function renderUsageByRecipesChart(recipes) {
     const ctx = document.getElementById('usageByRecipesChart');
     if (!ctx) return;
+    
+    // Show canvas if it was hidden
+    ctx.style.display = 'block';
+    
+    // Remove error message if exists
+    const chartContainer = ctx.closest('.bg-white');
+    const errorDiv = chartContainer?.querySelector('.chart-error-message');
+    if (errorDiv) {
+        errorDiv.remove();
+    }
     
     if (charts.usageByRecipes) {
         charts.usageByRecipes.destroy();

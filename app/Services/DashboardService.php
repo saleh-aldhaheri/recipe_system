@@ -50,7 +50,7 @@ class DashboardService
         }
 
         $result = ['items' => $itemsData];
-        $this->cache->set($key, $result, 600); // 10 دقائق
+        $this->cache->set($key, $result, 600);
 
         return $result;
     }

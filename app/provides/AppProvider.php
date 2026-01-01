@@ -13,13 +13,15 @@ class AppProvider
     public function register(Container $container)
     {
         $container->set(CacheInterface::class, function () {
-
             $redis = new Redis;
+            $host = $_ENV['REDIS_HOST'] ?? '127.0.0.1';
+            $port = $_ENV['REDIS_PORT'] ?? 6379;
 
-            $redis->connect(
-                $_ENV['REDIS_HOST'] ?? '127.0.0.1',
-                $_ENV['REDIS_PORT'] ?? 6379
-            );
+            try {
+                $redis->connect($host, $port);
+            } catch (\Throwable $e) {
+                throw $e;
+            }
 
             $adapter = new RedisAdapter($redis);
 

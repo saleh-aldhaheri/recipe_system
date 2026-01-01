@@ -11,7 +11,6 @@ class IndexDashboardRequest implements RequestInterface
 {
     public function validate(ServerRequestInterface $request): array
     {
-
         $body = $request->getParsedBody() ?? [];
 
         if (empty($body)) {
@@ -36,10 +35,10 @@ class IndexDashboardRequest implements RequestInterface
         $fromErrors = DateTime::getLastErrors();
         $toErrors = DateTime::getLastErrors();
 
-        if (
-            ! $fromDate || $fromErrors['warning_count'] > 0 || $fromErrors['error_count'] > 0 ||
-            ! $toDate || $toErrors['warning_count'] > 0 || $toErrors['error_count'] > 0
-        ) {
+        $fromHasErrors = $fromErrors !== false && ($fromErrors['warning_count'] > 0 || $fromErrors['error_count'] > 0);
+        $toHasErrors = $toErrors !== false && ($toErrors['warning_count'] > 0 || $toErrors['error_count'] > 0);
+
+        if (! $fromDate || ! $toDate || $fromHasErrors || $toHasErrors) {
             throw new ValidationException([
                 'format' => 'Dates must follow Y-m-d format (e.g., 2025-01-15)',
             ]);

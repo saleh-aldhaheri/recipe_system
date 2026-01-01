@@ -32,8 +32,7 @@ class ItemsController extends BaseController
                     ->orWhere('short_name', 'like', "%{$search}%");
             });
         }
-        
-        // Filter by status (in_stock = balance > 0, out_of_stock = balance = 0)
+
         if ($status === 'in_stock') {
             $query->where('balance', '>', 0);
         } elseif ($status === 'out_of_stock') {

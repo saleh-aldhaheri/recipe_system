@@ -4,7 +4,6 @@ namespace App\Middleware;
 
 use App\Exceptions\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\QueryException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -53,28 +52,26 @@ class ResponseMiddleware implements MiddlewareInterface
                 ->withStatus(404)
                 ->withHeader('Content-Type', 'application/json');
 
-        } catch (QueryException $e) {
-            $response = new Response;
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'message' => 'Database error occurred',
-            ], JSON_PRETTY_PRINT));
-
-            return $response
-                ->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
-
         } catch (Throwable $e) {
-            $response = new Response;
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'message' => 'An error occurred',
-                'error' => $e->getMessage(),
-            ], JSON_PRETTY_PRINT));
 
-            return $response
-                ->withStatus(500)
-                ->withHeader('Content-Type', 'application/json');
+            $response = new Response;
+
+            if (isAjaxRequest($request)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'An error occurred',
+                    'error' => $e->getMessage(),
+                ], JSON_PRETTY_PRINT));
+
+                return $response
+                    ->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $html = view('errors.500', ['error' => $e], 'main');
+            $response->getBody()->write($html);
+
+            return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
         }
     }
 }
