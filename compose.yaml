@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   php-app:
-    image: your-ghcr-username/recipe_management:latest
+    image: ghcr.io/salehnevergiveup/recipe_management_pro:latest
     container_name: Recipe_Management_pro
     env_file:
       - .env
