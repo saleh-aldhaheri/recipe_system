@@ -1,20 +1,25 @@
 FROM php:8.4-fpm
 
 RUN apt-get update && apt-get install -y \
-    git unzip libzip-dev libonig-dev libpng-dev libjpeg-dev libfreetype6-dev \
+    libzip-dev libonig-dev libpng-dev libjpeg-dev libfreetype6-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql mbstring zip opcache gd \
     && pecl install redis \
     && docker-php-ext-enable redis
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-WORKDIR /www/var
-
+WORKDIR /var/www/html
 COPY composer.json composer.lock ./
+RUN composer install --optimize-autoloader --no-dev --prefer-dist
 
-RUN composer install --optimize-autoloader
+COPY . .
+
+RUN echo "opcache.enable=1\n\
+opcache.memory_consumption=128\n\
+opcache.interned_strings_buffer=8\n\
+opcache.max_accelerated_files=10000\n\
+opcache.revalidate_freq=0\n\
+opcache.validate_timestamps=0" > /usr/local/etc/php/conf.d/opcache.ini
 
 EXPOSE 9000
-
 CMD ["php-fpm"]

@@ -2,35 +2,32 @@ version: '3.9'
 
 services:
   php-app:
-    build: .
-    container_name: Recipe_Management
+    image: your-ghcr-username/recipe_management:latest
+    container_name: Recipe_Management_pro
     env_file:
       - .env
-    volumes:
-      - .:/www/var 
-      - ./vendor:/www/var/vendor
     networks:
-      - app-network
+      - app-network_pro
     depends_on:
-      - db
-      - redis
+      - db_pro
+      - redis_pro
 
   nginx:
     image: nginx:latest
-    container_name: nginx
+    container_name: nginx_pro
     ports:
       - "8080:80"
-    volumes:
-      - ./public:/app/public
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     networks:
-      - app-network
+      - app-network_pro
     depends_on:
       - php-app
+    # You might need volumes here if Nginx needs access to app files
+    # volumes:
+    #   - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
 
-  db:
+  db_pro:
     image: mysql:8.0
-    container_name: db
+    container_name: db_pro
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: FOOD_PRODUCT
@@ -38,16 +35,16 @@ services:
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
       - db-data:/var/lib/mysql
     networks:
-      - app-network
+      - app-network_pro
 
-  redis:
+  redis_pro:
     image: redis:7
-    container_name: redis
+    container_name: redis_pro
     networks:
-      - app-network
+      - app-network_pro
 
 networks:
-  app-network:
+  app-network_pro:
 
 volumes:
   db-data:
