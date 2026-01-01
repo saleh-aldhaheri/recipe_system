@@ -76,52 +76,32 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <!-- Pie Chart: Transactions by Type -->
     <div class="bg-white border border-surface-border rounded-xl p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-6 pb-4 border-b border-surface-border">
+        <div class="mb-6 pb-4 border-b border-surface-border">
             <h3 class="text-lg font-bold text-text-primary">Transactions by Type</h3>
-            <select class="px-3 py-1.5 rounded-lg border border-surface-border bg-white text-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer shadow-sm [&>option]:bg-white [&>option]:text-text-primary" onchange="loadChartData('transactionsByType')">
-                <option value="last_week">Last Week</option>
-                <option value="last_month">Last Month</option>
-                <option value="last_year">Last Year</option>
-            </select>
         </div>
         <canvas id="transactionsByTypeChart" class="w-full"></canvas>
     </div>
 
     <!-- Bar Chart: Top Items -->
     <div class="bg-white border border-surface-border rounded-xl p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-6 pb-4 border-b border-surface-border">
+        <div class="mb-6 pb-4 border-b border-surface-border">
             <h3 class="text-lg font-bold text-text-primary">Top 10 Items by Usage</h3>
-            <select class="px-3 py-1.5 rounded-lg border border-surface-border bg-white text-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer shadow-sm [&>option]:bg-white [&>option]:text-text-primary" onchange="loadChartData('topItems')">
-                <option value="last_week">Last Week</option>
-                <option value="last_month">Last Month</option>
-                <option value="last_year">Last Year</option>
-            </select>
         </div>
         <canvas id="topItemsChart" class="w-full"></canvas>
     </div>
 
     <!-- Line Chart: Daily Trend -->
     <div class="bg-white border border-surface-border rounded-xl p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-6 pb-4 border-b border-surface-border">
+        <div class="mb-6 pb-4 border-b border-surface-border">
             <h3 class="text-lg font-bold text-text-primary">Daily Usage Trend</h3>
-            <select class="px-3 py-1.5 rounded-lg border border-surface-border bg-white text-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer shadow-sm [&>option]:bg-white [&>option]:text-text-primary" onchange="loadChartData('dailyTrend')">
-                <option value="last_week">Last Week</option>
-                <option value="last_month">Last Month</option>
-                <option value="last_year">Last Year</option>
-            </select>
         </div>
         <canvas id="dailyTrendChart" class="w-full"></canvas>
     </div>
 
     <!-- Bar Chart: Usage by Recipes -->
     <div class="bg-white border border-surface-border rounded-xl p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-6 pb-4 border-b border-surface-border">
+        <div class="mb-6 pb-4 border-b border-surface-border">
             <h3 class="text-lg font-bold text-text-primary">Top 10 Recipes by Usage</h3>
-            <select class="px-3 py-1.5 rounded-lg border border-surface-border bg-white text-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer shadow-sm [&>option]:bg-white [&>option]:text-text-primary" onchange="loadChartData('usageByRecipes')">
-                <option value="last_week">Last Week</option>
-                <option value="last_month">Last Month</option>
-                <option value="last_year">Last Year</option>
-            </select>
         </div>
         <canvas id="usageByRecipesChart" class="w-full"></canvas>
     </div>
@@ -129,13 +109,8 @@
 
 <!-- Items Summary Table -->
 <div class="bg-white border border-surface-border rounded-xl overflow-hidden shadow-sm">
-    <div class="px-6 py-5 border-b border-surface-border flex items-center justify-between">
+    <div class="px-6 py-5 border-b border-surface-border">
         <h2 class="text-xl font-bold text-text-primary">Items Summary</h2>
-        <select class="px-3 py-1.5 rounded-lg border border-surface-border bg-white text-text-primary text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer shadow-sm [&>option]:bg-white [&>option]:text-text-primary" onchange="loadTableData()">
-            <option value="last_week">Last Week</option>
-            <option value="last_month">Last Month</option>
-            <option value="last_year">Last Year</option>
-        </select>
     </div>
     <div class="overflow-x-auto">
         <div id="itemsTableContainer">

@@ -107,12 +107,12 @@ async function loadStats() {
  */
 async function loadTableData() {
     const container = document.getElementById('itemsTableContainer');
-    const timeFrame = document.querySelector('.table-time-frame')?.value || currentTimeFrame;
     
     container.innerHTML = '<div class="flex flex-col items-center justify-center py-12"><div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div><p class="mt-4 text-text-secondary">Loading items...</p></div>';
     
     try {
-        const dates = getTimeFrameDates(timeFrame);
+        // Use global time frame selector
+        const dates = getTimeFrameDates(currentTimeFrame);
         const response = await apiPost('/dashboard/items-summary', dates);
 
         if (response.success && response.data && response.data.items) {
@@ -186,8 +186,8 @@ function renderItemsTable(items) {
  * Load chart data
  */
 async function loadChartData(chartType) {
-    const timeFrame = document.querySelector(`#${chartType}Chart`)?.closest('.chart-card')?.querySelector('.chart-time-frame')?.value || currentTimeFrame;
-    const dates = getTimeFrameDates(timeFrame);
+    // Use global time frame selector
+    const dates = getTimeFrameDates(currentTimeFrame);
     
     try {
         let response;
