@@ -25,7 +25,7 @@
     </div>
 
     <div class="feature-card">
-        <h3>🥘 View Transactions</h3>
+        <h3>↔️ View Transactions</h3>
         <p>Track operations on your stock at any time frame.</p>
         <a href="<?= url('transactions') ?>" class="btn btn-primary">Go to Transactions</a>
     </div>

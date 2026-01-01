@@ -1,5 +1,6 @@
 <?php
 
+use App\Controllers\DashboardController;
 use App\Controllers\IngredientsController;
 use App\Controllers\ItemsController;
 use App\Controllers\RecipesController;
@@ -51,3 +52,19 @@ $app->group('/ingredients', function (RouteCollectorProxy $group) {
 });
 
 $app->get('/transactions', [TransactionsController::class, 'index']);
+
+$app->group('/dashboard', function (RouteCollectorProxy $group) {
+
+    $group->get('', [DashboardController::class, 'index']);
+
+    $group->post('/items-summary', [DashboardController::class, 'getItemsSummary']);
+
+    $group->post('/stats', [DashboardController::class, 'getStats']);
+
+    $group->post('/transactions-by-type', [DashboardController::class, 'getTransactionsByType']);
+    $group->post('/top-items', [DashboardController::class, 'getTopItems']);
+    $group->post('/daily-trend', [DashboardController::class, 'getDailyTrend']);
+    $group->post('/usage-by-recipes', [DashboardController::class, 'getUsageByRecipes']);
+
+    $group->post('/item/{id}/recipes', [DashboardController::class, 'getItemRecipes']);
+});

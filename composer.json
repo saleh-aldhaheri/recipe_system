@@ -22,7 +22,9 @@
         "laminas/laminas-diactoros": "^3.8",
         "illuminate/database": "^12.44",
         "illuminate/events": "^12.44",
-        "symfony/dotenv": "^8.0"
+        "symfony/dotenv": "^8.0",
+        "symfony/cache": "^8.0",
+        "php-di/php-di": "^7.1"
     },
     "require-dev": {
         "laravel/pint": "^1.26"

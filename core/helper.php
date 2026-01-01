@@ -98,3 +98,34 @@ function asset(string $path): string
 
     return '/'.$path;
 }
+
+/**
+ * Get time frame dates (from and to)
+ *
+ * @param  string  $timeFrame  'last_week', 'last_month', 'last_year'
+ * @return array{from: DateTime, to: DateTime}
+ */
+function getTimeFrameDates(string $timeFrame): array
+{
+    $now = new DateTime;
+    $from = clone $now;
+
+    switch ($timeFrame) {
+        case 'last_week':
+            $from->modify('-7 days');
+            break;
+        case 'last_month':
+            $from->modify('-1 month');
+            break;
+        case 'last_year':
+            $from->modify('-1 year');
+            break;
+        default:
+            $from->modify('-7 days'); // Default: last week
+    }
+
+    return [
+        'from' => $from,
+        'to' => $now,
+    ];
+}

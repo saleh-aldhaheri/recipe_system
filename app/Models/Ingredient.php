@@ -36,20 +36,20 @@ class Ingredient extends Model
             $ingredient->load('item');
             $ingredientService = new ingredientsService;
             $ingredientService->checkItem($ingredient);
-            $ingredientService->updateItemOnCreate($ingredient); 
+            $ingredientService->updateItemOnCreate($ingredient);
         });
 
         static::updating(function (Ingredient $ingredient) {
             $ingredient->load('item');
             $ingredientService = new ingredientsService;
             $ingredientService->checkItem($ingredient);
-            $ingredientService->updateItemOnUpdate($ingredient); 
+            $ingredientService->updateItemOnUpdate($ingredient);
         });
 
         static::deleting(function (Ingredient $ingredient) {
             $ingredient->load('item');
             (new ingredientsService)->updateItemOnDelete($ingredient);
         });
-        
+
     }
 }

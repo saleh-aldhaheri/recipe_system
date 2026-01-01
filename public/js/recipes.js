@@ -8,6 +8,7 @@ let currentWeekStart = getSunday(new Date());
 let selectedDay = null;
 let allRecipes = []; // Cache all recipes
 let ingredientCounter = 0; // Counter for ingredient rows
+let ingredientChoicesInstances = {}; // Store Choices.js instances for ingredient selects
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -53,10 +54,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Handle "Edit" button
             if (action === 'edit-recipe') {
                 const recipeId = target.getAttribute('data-recipe-id');
+                const recipeDate = target.getAttribute('data-recipe-date');
                 if (recipeId) {
                     event.preventDefault();
                     event.stopPropagation();
-                    editRecipe(parseInt(recipeId));
+                    editRecipe(parseInt(recipeId), recipeDate);
                 }
                 return;
             }
@@ -236,8 +238,24 @@ function updateCalendarRecipes() {
             dayRecipes.forEach(recipe => {
                 const recipeBadge = document.createElement('div');
                 recipeBadge.className = 'recipe-badge';
-                recipeBadge.textContent = recipe.name;
-                recipeBadge.title = recipe.name;
+                
+                // Truncate recipe name if too long (max 25 characters)
+                const maxLength = 25;
+                const displayName = recipe.name.length > maxLength 
+                    ? recipe.name.substring(0, maxLength) + '...' 
+                    : recipe.name;
+                
+                recipeBadge.textContent = displayName;
+                recipeBadge.title = recipe.name; // Full name in tooltip
+                recipeBadge.setAttribute('data-recipe-id', recipe.id);
+                recipeBadge.setAttribute('data-recipe-date', dateString);
+                recipeBadge.style.cursor = 'pointer';
+                recipeBadge.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const recipeId = parseInt(this.getAttribute('data-recipe-id'));
+                    openRecipeDetails(recipeId, dateString);
+                });
                 container.appendChild(recipeBadge);
             });
         }
@@ -343,6 +361,76 @@ async function openDayRecipes(dayDate) {
 }
 
 /**
+ * Open recipe details for a specific recipe
+ * @param {number} recipeId
+ * @param {string} dateString
+ */
+async function openRecipeDetails(recipeId, dateString) {
+    try {
+        const response = await apiGet(`/recipes/${recipeId}`);
+        
+        if (response.success) {
+            const recipe = response.data;
+            selectedDay = new Date(dateString);
+            
+            const modal = document.getElementById('recipeModal');
+            const selectedDateEl = document.getElementById('selectedDate');
+            const modalTitleEl = document.getElementById('recipeModalTitle');
+            const modalBodyEl = document.getElementById('recipeModalBody');
+            
+            if (!modal || !selectedDateEl || !modalTitleEl || !modalBodyEl) {
+                console.error('Modal elements not found');
+                return;
+            }
+            
+            // Close modal if already open to reset it
+            if (modal.style.display === 'block') {
+                modal.style.display = 'none';
+                modal.style.visibility = 'hidden';
+                modal.style.opacity = '0';
+                void modal.offsetHeight;
+            }
+            
+            // Set content
+            selectedDateEl.textContent = dateString;
+            modalTitleEl.textContent = `Recipe: ${recipe.name}`;
+            
+            let html = `
+                <div class="card">
+                    <h3>${recipe.name}</h3>
+                    <p style="color: #7f8c8d; margin: 0.5rem 0;">Date: ${recipe.date}</p>
+                    ${recipe.ingredients && recipe.ingredients.length > 0 ? `
+                        <div style="margin-top: 1rem;">
+                            <strong>Ingredients:</strong>
+                            <ul style="margin-top: 0.5rem;">
+                                ${recipe.ingredients.map(ing => 
+                                    `<li>${ing.item ? ing.item.name : 'N/A'} - ${ing.quantity} ${ing.item ? ing.item.unit : ''}</li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    ` : '<p style="color: #7f8c8d; margin-top: 1rem;">No ingredients added yet.</p>'}
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary btn-small" data-recipe-id="${recipe.id}" data-recipe-date="${recipe.date}" data-action="edit-recipe">Edit</button>
+                        <button class="btn btn-danger btn-small" data-recipe-id="${recipe.id}" data-action="delete-recipe">Delete</button>
+                    </div>
+                </div>
+            `;
+            
+            modalBodyEl.innerHTML = html;
+            
+            // Force reflow and show modal
+            void modal.offsetHeight;
+            modal.style.visibility = 'visible';
+            modal.style.display = 'block';
+            modal.style.opacity = '1';
+        }
+    } catch (error) {
+        console.error('Error loading recipe details:', error);
+        showError('Failed to load recipe details');
+    }
+}
+
+/**
  * Display recipes for a day
  * @param {Array} recipes
  * @param {string} dateString
@@ -359,26 +447,33 @@ function displayDayRecipes(recipes, dateString) {
             <p>No recipes for this day. Click "Add New Recipe" to create one.</p>
         `;
     } else {
-        // Recipe exists for this day - show recipe details with Edit/Delete options only
-        const recipe = recipes[0];
+        // Show all recipes for this day with clickable cards
         html = `
-            <div class="card">
-                <h3>${recipe.name}</h3>
-                <p style="color: #7f8c8d; margin: 0.5rem 0;">Date: ${recipe.date}</p>
-                ${recipe.ingredients && recipe.ingredients.length > 0 ? `
-                    <div style="margin-top: 1rem;">
-                        <strong>Ingredients:</strong>
-                        <ul style="margin-top: 0.5rem;">
-                            ${recipe.ingredients.map(ing => 
-                                `<li>${ing.item ? ing.item.name : 'N/A'} - ${ing.quantity}</li>`
-                            ).join('')}
-                        </ul>
+            <div style="margin-bottom: 1rem;">
+                <button class="btn btn-primary" data-action="add-recipe">+ Add New Recipe</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                ${recipes.map(recipe => `
+                    <div class="card" style="cursor: pointer;" onclick="openRecipeDetails(${recipe.id}, '${dateString}')">
+                        <h3 style="margin: 0 0 0.5rem 0;">${recipe.name}</h3>
+                        <p style="color: #7f8c8d; margin: 0.5rem 0; font-size: 0.875rem;">Date: ${recipe.date}</p>
+                        ${recipe.ingredients && recipe.ingredients.length > 0 ? `
+                            <div style="margin-top: 0.5rem;">
+                                <strong style="font-size: 0.875rem;">Ingredients:</strong>
+                                <ul style="margin-top: 0.25rem; font-size: 0.875rem;">
+                                    ${recipe.ingredients.slice(0, 3).map(ing => 
+                                        `<li>${ing.item ? ing.item.name : 'N/A'} - ${ing.quantity} ${ing.item ? ing.item.unit : ''}</li>`
+                                    ).join('')}
+                                    ${recipe.ingredients.length > 3 ? `<li style="color: #7f8c8d;">... and ${recipe.ingredients.length - 3} more</li>` : ''}
+                                </ul>
+                            </div>
+                        ` : '<p style="color: #7f8c8d; margin-top: 0.5rem; font-size: 0.875rem;">No ingredients added yet.</p>'}
+                        <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
+                            <button class="btn btn-primary btn-small" data-recipe-id="${recipe.id}" data-recipe-date="${recipe.date}" data-action="edit-recipe" onclick="event.stopPropagation();">Edit</button>
+                            <button class="btn btn-danger btn-small" data-recipe-id="${recipe.id}" data-action="delete-recipe" onclick="event.stopPropagation();">Delete</button>
+                        </div>
                     </div>
-                ` : ''}
-                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                    <button class="btn btn-primary btn-small" data-recipe-id="${recipe.id}" data-action="edit-recipe">Edit</button>
-                    <button class="btn btn-danger btn-small" data-recipe-id="${recipe.id}" data-action="delete-recipe">Delete</button>
-                </div>
+                `).join('')}
             </div>
         `;
     }
@@ -444,6 +539,14 @@ function openRecipeForm(dateString) {
 function closeRecipeFormModal() {
     const modal = document.getElementById('recipeFormModal');
     if (modal) {
+        // Destroy all Choices.js instances
+        Object.keys(ingredientChoicesInstances).forEach(selectId => {
+            if (ingredientChoicesInstances[selectId]) {
+                ingredientChoicesInstances[selectId].destroy();
+            }
+        });
+        ingredientChoicesInstances = {};
+        
         modal.style.display = 'none';
         modal.style.visibility = 'hidden';
         document.getElementById('recipeForm').reset();
@@ -475,7 +578,7 @@ async function addIngredientRow() {
 
         let html = `
             <div class="ingredient-item" id="${rowId}">
-                <select class="ingredient-item-select" required>
+                <select class="ingredient-item-select" id="ingredient-select-${rowId}" required>
                     <option value="">Select Item</option>
         `;
 
@@ -492,6 +595,16 @@ async function addIngredientRow() {
 
         const container = document.getElementById('ingredientsList');
         container.insertAdjacentHTML('beforeend', html);
+        
+        // Initialize Choices.js for the new select
+        const selectId = `ingredient-select-${rowId}`;
+        ingredientChoicesInstances[selectId] = new Choices(`#${selectId}`, {
+            searchEnabled: true,
+            shouldSort: true,
+            placeholder: true,
+            placeholderValue: 'Select Item',
+            searchPlaceholderValue: 'Search items...'
+        });
     } catch (error) {
         console.error('Error loading items:', error);
         showError('Failed to load items');
@@ -503,14 +616,21 @@ async function addIngredientRow() {
  * @param {string} rowId
  */
 function removeIngredientRow(rowId) {
+    const selectId = `ingredient-select-${rowId}`;
+    // Destroy Choices.js instance if it exists
+    if (ingredientChoicesInstances[selectId]) {
+        ingredientChoicesInstances[selectId].destroy();
+        delete ingredientChoicesInstances[selectId];
+    }
     document.getElementById(rowId).remove();
 }
 
 /**
  * Edit recipe
  * @param {number} id
+ * @param {string} recipeDate - Optional date to set immediately
  */
-async function editRecipe(id) {
+async function editRecipe(id, recipeDate = null) {
     try {
         closeRecipeModal();
         const formModal = document.getElementById('recipeFormModal');
@@ -524,17 +644,54 @@ async function editRecipe(id) {
         document.getElementById('recipeFormTitle').textContent = 'Edit Recipe';
         document.getElementById('recipeId').value = id;
 
+        // Set date immediately if provided (for faster UI response)
+        if (recipeDate) {
+            const dateHidden = document.getElementById('recipeDate');
+            const dateInput = document.getElementById('recipeDateInput');
+            let dateValue = recipeDate;
+            if (dateValue.includes('T')) {
+                dateValue = dateValue.split('T')[0];
+            }
+            if (dateHidden) {
+                dateHidden.value = dateValue;
+            }
+            if (dateInput) {
+                dateInput.value = dateValue;
+                dateInput.readOnly = true;
+            }
+        }
+
         // Load recipe details
         const response = await apiGet(`/recipes/${id}`);
 
         if (response.success) {
             const recipe = response.data;
             
-            document.getElementById('recipeName').value = recipe.name;
-            document.getElementById('recipeDate').value = recipe.date;
+            // Set recipe name
+            const nameInput = document.getElementById('recipeName');
+            if (nameInput) {
+                nameInput.value = recipe.name || '';
+            }
+            
+            // Set recipe date - ensure it's set correctly (override with API data if different)
+            const dateHidden = document.getElementById('recipeDate');
             const dateInput = document.getElementById('recipeDateInput');
-            dateInput.value = recipe.date;
-            dateInput.readOnly = true; // Make date readonly when editing existing recipe
+            
+            if (recipe.date) {
+                // Format date to YYYY-MM-DD if needed
+                let dateValue = recipe.date;
+                if (dateValue.includes('T')) {
+                    dateValue = dateValue.split('T')[0];
+                }
+                
+                if (dateHidden) {
+                    dateHidden.value = dateValue;
+                }
+                if (dateInput) {
+                    dateInput.value = dateValue;
+                    dateInput.readOnly = true; // Make date readonly when editing existing recipe
+                }
+            }
 
             // Load items for ingredient dropdowns
             const itemsResponse = await apiGet('/items', { per_page: 1000 });
@@ -547,9 +704,10 @@ async function editRecipe(id) {
             if (recipe.ingredients && recipe.ingredients.length > 0) {
                 recipe.ingredients.forEach(ingredient => {
                     const rowId = `ingredient-${ingredientCounter++}`;
+                    const selectId = `ingredient-select-${rowId}`;
                     let html = `
                         <div class="ingredient-item" id="${rowId}">
-                            <select class="ingredient-item-select" required>
+                            <select class="ingredient-item-select" id="${selectId}" required>
                                 <option value="">Select Item</option>
                     `;
 
@@ -566,6 +724,15 @@ async function editRecipe(id) {
                     `;
 
                     document.getElementById('ingredientsList').insertAdjacentHTML('beforeend', html);
+                    
+                    // Initialize Choices.js for the select
+                    ingredientChoicesInstances[selectId] = new Choices(`#${selectId}`, {
+                        searchEnabled: true,
+                        shouldSort: true,
+                        placeholder: true,
+                        placeholderValue: 'Select Item',
+                        searchPlaceholderValue: 'Search items...'
+                    });
                 });
             } else {
                 addIngredientRow();
@@ -590,7 +757,12 @@ async function saveRecipe(event) {
     // Collect ingredients
     const ingredients = [];
     document.querySelectorAll('.ingredient-item').forEach(item => {
-        const itemId = item.querySelector('.ingredient-item-select').value;
+        const select = item.querySelector('.ingredient-item-select');
+        const selectId = select.id;
+        // Get value from Choices.js instance if it exists, otherwise use native value
+        const itemId = ingredientChoicesInstances[selectId] 
+            ? ingredientChoicesInstances[selectId].getValue(true) 
+            : select.value;
         const quantity = item.querySelector('.ingredient-quantity').value;
         
         if (itemId && quantity) {

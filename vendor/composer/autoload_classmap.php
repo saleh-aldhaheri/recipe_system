@@ -21,4 +21,5 @@ return array(
     'Override' => $vendorDir . '/symfony/polyfill-php83/Resources/stubs/Override.php',
     'ReflectionConstant' => $vendorDir . '/symfony/polyfill-php84/Resources/stubs/ReflectionConstant.php',
     'SQLite3Exception' => $vendorDir . '/symfony/polyfill-php83/Resources/stubs/SQLite3Exception.php',
+    '©' => $vendorDir . '/symfony/cache/Traits/ValueWrapper.php',
 );

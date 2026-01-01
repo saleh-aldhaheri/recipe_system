@@ -2,7 +2,9 @@
 <?php
 
 use App\Middleware\ResponseMiddleware;
-use Illuminate\Container\Container;
+use App\provides\AppProvider;
+use DI\Container;
+use Illuminate\Container\Container as IlluminateContainer;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Events\Dispatcher;
 use Slim\Factory\AppFactory;
@@ -15,7 +17,12 @@ if (file_exists(BASE.'.env')) {
     $envInstance->load(BASE.'.env');
 }
 
+$container = new Container;
+
+AppFactory::setContainer($container);
 $app = AppFactory::create();
+
+(new AppProvider)->register($container);
 
 $capsule = new Capsule;
 
@@ -30,7 +37,7 @@ $capsule->addConnection([
     'prefix' => $_ENV['DB_PREFIX'] ?? '',
 ]);
 //
-$capsule->setEventDispatcher(new Dispatcher(new Container));
+$capsule->setEventDispatcher(new Dispatcher(new IlluminateContainer));
 
 $capsule->setAsGlobal();
 

@@ -16,7 +16,7 @@ class TransactionsController extends BaseController
         $search = $queryParams['search'] ?? '';
         $query = Transaction::with(['item', 'recipe']);
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('type', 'LIKE', "%{$search}%")
                     ->orWhere('operation', 'LIKE', "%{$search}%")

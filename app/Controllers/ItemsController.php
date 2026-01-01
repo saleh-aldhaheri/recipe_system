@@ -12,6 +12,10 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class ItemsController extends BaseController
 {
+    public function __construct(
+        private ItemsService $itemsService
+    ) {}
+
     public function index(Request $request, Response $response): Response
     {
         $queryParams = $request->getQueryParams();
@@ -86,7 +90,7 @@ class ItemsController extends BaseController
 
         $validatedData = (new UpdateItemsRequest($id))->validate($request);
 
-        (new ItemsService)->updateItem($item, $validatedData);
+        $this->itemsService->updateItem($item, $validatedData);
 
         return jsonResponse($response, [
             'success' => true,

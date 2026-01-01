@@ -505,6 +505,9 @@ tbody tr:last-child td {
     display: flex;
     flex-direction: column;
     box-shadow: none;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .calendar-day:hover {
@@ -556,12 +559,23 @@ tbody tr:last-child td {
     border-radius: 6px;
     font-size: 0.8125rem;
     margin: 0.25rem 0;
-    display: inline-block;
+    display: block;
+    width: 100%;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    word-break: break-word;
+}
+
+.recipe-badge:hover {
+    background: var(--success-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 .calendar-day-recipes {
@@ -570,6 +584,9 @@ tbody tr:last-child td {
     margin-top: auto;
     padding-top: 0.5rem;
     min-height: 40px;
+    width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .calendar-nav {

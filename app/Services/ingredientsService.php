@@ -89,14 +89,14 @@ class ingredientsService
             if (abs($diff) > 0.001) {
                 $operation = $diff > 0 ? '+' : '-';
                 $transactionQuantity = abs($diff);
-                
+
                 $balanceBefore = (float) $newItem->balance;
-                
+
                 $newItem->balance += $diff;
                 $newItem->save();
-                
+
                 $newItem->refresh();
-                
+
                 (new TransactionsService)->createTransaction(
                     $newItem,
                     TransactionTypeEnum::RECIPE_USAGE,

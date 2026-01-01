@@ -16,6 +16,11 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class RecipesController extends BaseController
 {
+    public function __construct(
+        private ingredientsService $ingredientService,
+        private ImportRecipeService $importRecipeService
+    ) {}
+
     public function index(Request $request, Response $response): Response
     {
         $queryParams = $request->getQueryParams();
@@ -78,7 +83,7 @@ class RecipesController extends BaseController
                 'date' => $validated['date'],
             ]);
 
-            $failed = (new ingredientsService)->storeIngredients($validated['ingredients'], $recipe->id);
+            $failed = ($this->ingredientService)->storeIngredients($validated['ingredients'], $recipe->id);
 
             return ['recipe' => $recipe->load('ingredients.item'), 'failed' => $failed];
         });
@@ -134,9 +139,9 @@ class RecipesController extends BaseController
                 }
 
                 if (! empty($ingredientsData)) {
-                    $failed = array_merge($failed, (new ingredientsService)->updateRecipeIngredients($recipe, $ingredientsData));
+                    $failed = array_merge($failed, ($this->ingredientService)->updateRecipeIngredients($recipe, $ingredientsData));
                 } else {
-                    $failed = array_merge($failed, (new ingredientsService)->updateRecipeIngredients($recipe, []));
+                    $failed = array_merge($failed, ($this->ingredientService)->updateRecipeIngredients($recipe, []));
                 }
             }
 
@@ -159,7 +164,7 @@ class RecipesController extends BaseController
 
         $files = $validated['files'];
 
-        $result = (new ImportRecipeService)->processFiles($files);
+        $result = $this->importRecipeService->processFiles($files);
 
         return jsonResponse($response, [
             'success' => true,
@@ -178,7 +183,7 @@ class RecipesController extends BaseController
         $recipe = Recipe::with('ingredients')->findOrFail($id);
 
         DB::connection()->transaction(function () use ($recipe) {
-            $ingredientsService = new ingredientsService;
+            $ingredientsService = $this->ingredientService;
             foreach ($recipe->ingredients as $ingredient) {
                 $ingredientsService->updateItemOnDelete($ingredient);
             }

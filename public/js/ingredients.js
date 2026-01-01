@@ -11,6 +11,7 @@ let currentRecipeFilter = '';
 let currentItemFilter = '';
 let allRecipes = [];
 let allItems = [];
+let choicesInstances = {}; // Store Choices.js instances
 
 // Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -50,6 +51,31 @@ async function loadItems() {
 }
 
 /**
+ * Initialize Choices.js for a select element
+ */
+function initChoices(selectId, options = {}) {
+    const select = document.getElementById(selectId);
+    if (!select) return null;
+    
+    // Destroy existing instance if any
+    if (choicesInstances[selectId]) {
+        choicesInstances[selectId].destroy();
+    }
+    
+    const defaultOptions = {
+        searchEnabled: true,
+        shouldSort: true,
+        placeholder: true,
+        placeholderValue: select.querySelector('option[value=""]')?.textContent || 'Select...',
+        searchPlaceholderValue: 'Search...',
+        ...options
+    };
+    
+    choicesInstances[selectId] = new Choices(select, defaultOptions);
+    return choicesInstances[selectId];
+}
+
+/**
  * Populate recipe dropdowns
  */
 function populateRecipeDropdowns() {
@@ -71,6 +97,10 @@ function populateRecipeDropdowns() {
         option2.textContent = `${recipe.name} (${recipe.date})`;
         formSelect.appendChild(option2);
     });
+    
+    // Initialize Choices.js
+    initChoices('filterRecipe', { placeholderValue: 'All Recipes' });
+    initChoices('ingredientRecipe', { placeholderValue: 'Select Recipe' });
 }
 
 /**
@@ -96,6 +126,10 @@ function populateItemDropdowns() {
         option2.dataset.balance = item.balance;
         formSelect.appendChild(option2);
     });
+    
+    // Initialize Choices.js
+    initChoices('filterItem', { placeholderValue: 'All Items' });
+    initChoices('ingredientItem', { placeholderValue: 'Select Item' });
 }
 
 /**
@@ -259,8 +293,12 @@ function goToPage(page) {
  * Apply filters
  */
 function applyFilters() {
-    currentRecipeFilter = document.getElementById('filterRecipe').value;
-    currentItemFilter = document.getElementById('filterItem').value;
+    // Get values from Choices.js instances if they exist
+    const filterRecipeInstance = choicesInstances['filterRecipe'];
+    const filterItemInstance = choicesInstances['filterItem'];
+    
+    currentRecipeFilter = filterRecipeInstance ? filterRecipeInstance.getValue(true) : document.getElementById('filterRecipe').value;
+    currentItemFilter = filterItemInstance ? filterItemInstance.getValue(true) : document.getElementById('filterItem').value;
     currentPage = 1;
     loadIngredients();
 }
@@ -293,7 +331,9 @@ function closeIngredientModal() {
  * Check item balance and show warning if needed
  */
 function checkItemBalance() {
-    const itemId = document.getElementById('ingredientItem').value;
+    // Get value from Choices.js instance if it exists
+    const ingredientItemInstance = choicesInstances['ingredientItem'];
+    const itemId = ingredientItemInstance ? ingredientItemInstance.getValue(true) : document.getElementById('ingredientItem').value;
     const quantity = parseFloat(document.getElementById('ingredientQuantity').value) || 0;
     const originalQuantity = parseFloat(document.getElementById('originalQuantity').value) || 0;
     const originalItemId = document.getElementById('originalItemId').value;
@@ -306,8 +346,15 @@ function checkItemBalance() {
         return;
     }
 
-    const selectedOption = document.getElementById('ingredientItem').selectedOptions[0];
-    const currentBalance = parseFloat(selectedOption.dataset.balance) || 0;
+    // Get selected option from Choices.js or native select
+    let selectedOption;
+    if (ingredientItemInstance) {
+        const selectedValue = ingredientItemInstance.getValue(true);
+        selectedOption = Array.from(document.getElementById('ingredientItem').options).find(opt => opt.value === selectedValue);
+    } else {
+        selectedOption = document.getElementById('ingredientItem').selectedOptions[0];
+    }
+    const currentBalance = parseFloat(selectedOption?.dataset.balance) || 0;
 
     // Calculate balance after operation
     let balanceAfter = currentBalance;
@@ -377,14 +424,18 @@ async function saveIngredient(event) {
     event.preventDefault();
 
     try {
+        // Get values from Choices.js instances if they exist
+        const ingredientRecipeInstance = choicesInstances['ingredientRecipe'];
+        const ingredientItemInstance = choicesInstances['ingredientItem'];
+        
         const ingredientId = document.getElementById('ingredientId').value;
         const originalQuantity = parseFloat(document.getElementById('originalQuantity').value) || 0;
         const originalItemId = document.getElementById('originalItemId').value;
-        const newItemId = parseInt(document.getElementById('ingredientItem').value);
+        const newItemId = parseInt(ingredientItemInstance ? ingredientItemInstance.getValue(true) : document.getElementById('ingredientItem').value);
         const newQuantity = parseFloat(document.getElementById('ingredientQuantity').value);
 
         const ingredientData = {
-            recipe_id: parseInt(document.getElementById('ingredientRecipe').value),
+            recipe_id: parseInt(ingredientRecipeInstance ? ingredientRecipeInstance.getValue(true) : document.getElementById('ingredientRecipe').value),
             item_id: newItemId,
             quantity: newQuantity
         };
