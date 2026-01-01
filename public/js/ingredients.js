@@ -138,9 +138,9 @@ function populateItemDropdowns() {
 async function loadIngredients() {
     try {
         document.getElementById('ingredientsTableContainer').innerHTML = `
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>Loading ingredients...</p>
+            <div class="flex flex-col items-center justify-center py-12">
+                <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+                <p class="mt-4 text-text-secondary">Loading ingredients...</p>
             </div>
         `;
 
@@ -193,40 +193,48 @@ function displayIngredients(ingredients) {
     }
 
     let html = `
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Recipe</th>
-                        <th>Item</th>
-                        <th>Quantity</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-background-light border-b border-surface-border">
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary min-w-[180px]">Recipe Name</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary min-w-[150px]">Item Name</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary w-32">Quantity</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary w-32">Unit</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary w-24 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-border text-sm">
     `;
 
     ingredients.forEach((ingredient, index) => {
         const rowNumber = (currentPage - 1) * currentPerPage + index + 1;
         html += `
-            <tr>
-                <td>${rowNumber}</td>
-                <td>${ingredient.recipe ? ingredient.recipe.name : 'N/A'}</td>
-                <td>${ingredient.item ? `${ingredient.item.short_name} - ${ingredient.item.name}` : 'N/A'}</td>
-                <td>${ingredient.quantity}</td>
-                <td>
-                    <button class="btn btn-primary btn-small" onclick="editIngredient(${ingredient.id})">Edit</button>
-                    <button class="btn btn-danger btn-small" onclick="deleteIngredient(${ingredient.id})">Delete</button>
+            <tr class="group hover:bg-surface-border/20 transition-colors">
+                <td class="py-4 px-6 text-text-primary font-medium">${ingredient.recipe ? escapeHtml(ingredient.recipe.name) : 'N/A'}</td>
+                <td class="py-4 px-6 text-text-secondary">${ingredient.item ? escapeHtml(ingredient.item.name) : 'N/A'}</td>
+                <td class="py-4 px-6 text-text-primary font-mono">${parseFloat(ingredient.quantity).toFixed(3)}</td>
+                <td class="py-4 px-6">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                        ${ingredient.item ? escapeHtml(ingredient.item.unit) : 'N/A'}
+                    </span>
+                </td>
+                <td class="py-4 px-6 text-right">
+                    <div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <button onclick="editIngredient(${ingredient.id})" class="p-1.5 rounded-md hover:bg-background-light text-text-secondary hover:text-primary transition-colors" title="Edit">
+                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                        </button>
+                        <button onclick="deleteIngredient(${ingredient.id})" class="p-1.5 rounded-md hover:bg-background-light text-text-secondary hover:text-danger transition-colors" title="Delete">
+                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
     });
 
     html += `
-                </tbody>
-            </table>
-        </div>
+            </tbody>
+        </table>
     `;
 
     document.getElementById('ingredientsTableContainer').innerHTML = html;
@@ -244,37 +252,48 @@ function displayPagination(pagination) {
 
     let html = '';
 
+    // Show page info
+    html += `
+        <span class="text-text-secondary">Showing <span class="font-medium text-text-primary">${((pagination.current_page - 1) * pagination.per_page) + 1}</span> to <span class="font-medium text-text-primary">${Math.min(pagination.current_page * pagination.per_page, pagination.total)}</span> of <span class="font-medium text-text-primary">${pagination.total}</span> results</span>
+    `;
+    
+    // Pagination buttons
+    html += `<div class="flex items-center gap-2 ml-4">`;
+    
     html += `
         <button ${pagination.current_page === 1 ? 'disabled' : ''} 
-                onclick="goToPage(${pagination.current_page - 1})">
-            Previous
+                onclick="goToPage(${pagination.current_page - 1})"
+                class="relative inline-flex items-center rounded-l-md px-2 py-2 text-text-secondary ring-1 ring-inset ring-surface-border hover:bg-background-light focus:z-20 focus:outline-offset-0 transition-colors ${pagination.current_page === 1 ? 'cursor-not-allowed opacity-50' : ''}">
+            <span class="sr-only">Previous</span>
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
         </button>
     `;
 
     for (let i = 1; i <= pagination.last_page; i++) {
         if (i === 1 || i === pagination.last_page || 
             (i >= pagination.current_page - 2 && i <= pagination.current_page + 2)) {
+            const isActive = i === pagination.current_page;
             html += `
-                <button class="${i === pagination.current_page ? 'active' : ''}" 
-                        onclick="goToPage(${i})">
+                <button onclick="goToPage(${i})"
+                        class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ${isActive ? 'text-white bg-primary focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary' : 'text-text-secondary ring-1 ring-inset ring-surface-border hover:bg-background-light hover:text-text-primary focus:z-20 focus:outline-offset-0 transition-colors'}">
                     ${i}
                 </button>
             `;
         } else if (i === pagination.current_page - 3 || i === pagination.current_page + 3) {
-            html += `<span>...</span>`;
+            html += `<span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-text-secondary ring-1 ring-inset ring-surface-border focus:outline-offset-0">...</span>`;
         }
     }
 
     html += `
         <button ${pagination.current_page === pagination.last_page ? 'disabled' : ''} 
-                onclick="goToPage(${pagination.current_page + 1})">
-            Next
+                onclick="goToPage(${pagination.current_page + 1})"
+                class="relative inline-flex items-center rounded-r-md px-2 py-2 text-text-secondary ring-1 ring-inset ring-surface-border hover:bg-background-light focus:z-20 focus:outline-offset-0 transition-colors ${pagination.current_page === pagination.last_page ? 'cursor-not-allowed opacity-50' : ''}">
+            <span class="sr-only">Next</span>
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
         </button>
-        <span style="margin-left: 1rem; padding: 0.5rem;">
-            Page ${pagination.current_page} of ${pagination.last_page} 
-            (Total: ${pagination.total} ingredients)
-        </span>
     `;
+    
+    html += `</div>`;
 
     document.getElementById('pagination').innerHTML = html;
 }
@@ -304,26 +323,62 @@ function applyFilters() {
 }
 
 /**
+ * Reset filters
+ */
+function resetFilters() {
+    // Reset Choices.js instances if they exist
+    if (choicesInstances['filterRecipe']) {
+        choicesInstances['filterRecipe'].setChoiceByValue('');
+    }
+    if (choicesInstances['filterItem']) {
+        choicesInstances['filterItem'].setChoiceByValue('');
+    }
+    
+    // Reset native selects if Choices.js is not used
+    const filterRecipe = document.getElementById('filterRecipe');
+    const filterItem = document.getElementById('filterItem');
+    if (filterRecipe && !choicesInstances['filterRecipe']) {
+        filterRecipe.value = '';
+    }
+    if (filterItem && !choicesInstances['filterItem']) {
+        filterItem.value = '';
+    }
+    
+    currentRecipeFilter = '';
+    currentItemFilter = '';
+    currentPage = 1;
+    loadIngredients();
+}
+
+/**
  * Open modal for creating new ingredient
  */
 function openIngredientModal() {
+    const modal = document.getElementById('ingredientModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'block';
+    }
     document.getElementById('ingredientForm').reset();
     document.getElementById('ingredientId').value = '';
     document.getElementById('originalQuantity').value = '';
     document.getElementById('originalItemId').value = '';
     document.getElementById('ingredientModalTitle').textContent = 'Add New Ingredient';
-    document.getElementById('balanceWarning').style.display = 'none';
+    document.getElementById('balanceWarning').classList.add('hidden');
     document.getElementById('itemBalanceInfo').textContent = '';
-    document.getElementById('ingredientModal').style.display = 'block';
 }
 
 /**
  * Close ingredient modal
  */
 function closeIngredientModal() {
-    document.getElementById('ingredientModal').style.display = 'none';
+    const modal = document.getElementById('ingredientModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
     document.getElementById('ingredientForm').reset();
-    document.getElementById('balanceWarning').style.display = 'none';
+    document.getElementById('balanceWarning').classList.add('hidden');
     document.getElementById('itemBalanceInfo').textContent = '';
 }
 
@@ -342,7 +397,7 @@ function checkItemBalance() {
 
     if (!itemId) {
         infoSpan.textContent = '';
-        warningDiv.style.display = 'none';
+        warningDiv.classList.add('hidden');
         return;
     }
 
@@ -374,10 +429,10 @@ function checkItemBalance() {
     infoSpan.textContent = `Current Balance: ${currentBalance} | After: ${balanceAfter}`;
 
     if (balanceAfter < 0) {
-        warningDiv.style.display = 'block';
+        warningDiv.classList.remove('hidden');
         warningDiv.innerHTML = `<strong>Warning:</strong> The selected item's balance will be negative (${balanceAfter.toFixed(3)}) after this operation.`;
     } else {
-        warningDiv.style.display = 'none';
+        warningDiv.classList.add('hidden');
     }
 }
 
@@ -388,7 +443,7 @@ function checkItemBalance() {
 async function editIngredient(id) {
     try {
         document.getElementById('ingredientModalTitle').textContent = 'Loading...';
-        document.getElementById('ingredientModal').style.display = 'block';
+        document.getElementById('ingredientModal').classList.remove('hidden');
 
         const response = await apiGet(`/ingredients/${id}`);
 
@@ -584,10 +639,20 @@ async function deleteIngredient(id) {
     }
 }
 
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('ingredientModal');
-    if (event.target === modal) {
+    if (event.target === modal || event.target.closest('.bg-black\\/50')) {
         closeIngredientModal();
     }
 }

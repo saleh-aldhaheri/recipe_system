@@ -42,17 +42,35 @@ async function apiRequest(url, method = 'GET', data = null, options = {}) {
         const response = await fetch(`${API_BASE_URL}${url}`, config);
 
         // Parse JSON response
-        const result = await response.json();
+        let result;
+        try {
+            const text = await response.text();
+            if (!text) {
+                throw new Error('Empty response from server');
+            }
+            result = JSON.parse(text);
+        } catch (e) {
+            // If response is not JSON, create error result
+            const text = await response.text().catch(() => '');
+            throw new Error(text || 'Invalid response from server');
+        }
 
         // Check if request was successful
-        if (!response.ok) {
-            // Handle error responses
-            throw new Error(result.message || 'Request failed');
+        if (!response.ok || !result.success) {
+            // Handle error responses - include full error details
+            const errorMessage = result.message || result.error || 'Request failed';
+            const errorObj = {
+                message: errorMessage,
+                error: result.error,
+                errors: result.errors
+            };
+            throw errorObj;
         }
 
         return result;
     } catch (error) {
         console.error('API Request Error:', error);
+        // Re-throw error so calling code can handle it and show notification
         throw error;
     }
 }

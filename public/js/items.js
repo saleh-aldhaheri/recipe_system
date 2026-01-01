@@ -24,9 +24,9 @@ async function loadItems() {
     try {
         // Show loading state
         document.getElementById('itemsTableContainer').innerHTML = `
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>Loading Items...</p>
+            <div class="flex flex-col items-center justify-center py-12">
+                <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+                <p class="mt-4 text-text-secondary">Loading items...</p>
             </div>
         `;
 
@@ -39,6 +39,12 @@ async function loadItems() {
         // Add search parameter if user has typed something
         if (currentSearch) {
             params.search = currentSearch;
+        }
+        
+        // Add status filter if selected
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter && statusFilter.value !== 'all') {
+            params.status = statusFilter.value;
         }
 
         // Make AJAX GET request
@@ -77,8 +83,9 @@ async function loadItems() {
 function displayItems(items) {
     if (items.length === 0) {
         document.getElementById('itemsTableContainer').innerHTML = `
-            <div class="text-center" style="padding: 2rem;">
-                <p>No items found</p>
+            <div class="flex flex-col items-center justify-center py-12">
+                <span class="material-symbols-outlined text-4xl text-text-secondary mb-2">inbox</span>
+                <p class="text-text-secondary">No items found</p>
             </div>
         `;
         return;
@@ -86,43 +93,73 @@ function displayItems(items) {
 
     // Build HTML table
     let html = `
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Short Name</th>
-                        <th>Name</th>
-                        <th>Balance</th>
-                        <th>Unit</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-background-light border-b border-surface-border">
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Item Details</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Code</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Balance</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Unit</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Status</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-border">
     `;
 
     // Loop through items and create table rows
     items.forEach((item, index) => {
         const rowNumber = (currentPage - 1) * currentPerPage + index + 1;
+        const balance = parseFloat(item.balance);
+        const statusClass = balance === 0 
+            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+            : 'bg-primary/20 text-primary border border-primary/20';
+        const statusText = balance === 0 ? 'Out of Stock' : 'In Stock';
+        
         html += `
-            <tr>
-                <td>${rowNumber}</td>
-                <td>${item.short_name}</td>
-                <td>${item.name}</td>
-                <td>${item.balance}</td>
-                <td>${item.unit}</td>
-                <td>
-                    <button class="btn btn-primary btn-small" onclick="editItem(${item.id})">Edit</button>
-                    <button class="btn btn-danger btn-small" onclick="deleteItem(${item.id})">Delete</button>
+            <tr class="hover:bg-background-light/20 transition-colors group">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="h-10 w-10 flex-shrink-0 bg-surface-border rounded-lg flex items-center justify-center text-text-secondary">
+                            <span class="material-symbols-outlined text-xl">inventory_2</span>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-text-primary">${escapeHtml(item.name)}</div>
+                            <div class="text-xs text-text-secondary">${escapeHtml(item.short_name)}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded bg-surface-border text-text-secondary font-mono">
+                        ${escapeHtml(item.short_name)}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-text-primary font-mono">${parseFloat(item.balance).toFixed(2)}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">${escapeHtml(item.unit)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                        ${statusText}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex items-center justify-end gap-2">
+                        <button onclick="editItem(${item.id})" class="p-2 text-text-secondary hover:text-primary transition-colors rounded-full hover:bg-background-light" title="Edit">
+                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                        </button>
+                        <button onclick="deleteItem(${item.id})" class="p-2 text-text-secondary hover:text-red-500 transition-colors rounded-full hover:bg-background-light" title="Delete">
+                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
     });
 
     html += `
-                </tbody>
-            </table>
-        </div>
+            </tbody>
+        </table>
     `;
 
     document.getElementById('itemsTableContainer').innerHTML = html;
@@ -140,11 +177,24 @@ function displayPagination(pagination) {
 
     let html = '';
 
+    // Show page info
+    html += `
+        <span class="text-sm text-text-secondary">
+            Showing <span class="font-medium text-text-primary">${((pagination.current_page - 1) * pagination.per_page) + 1}</span> to 
+            <span class="font-medium text-text-primary">${Math.min(pagination.current_page * pagination.per_page, pagination.total)}</span> of 
+            <span class="font-medium text-text-primary">${pagination.total}</span> results
+        </span>
+    `;
+    
+    // Pagination buttons
+    html += `<div class="flex items-center gap-1">`;
+    
     // Previous button
     html += `
         <button ${pagination.current_page === 1 ? 'disabled' : ''} 
-                onclick="goToPage(${pagination.current_page - 1})">
-            Previous
+                onclick="goToPage(${pagination.current_page - 1})"
+                class="p-2 rounded-lg hover:bg-background-light disabled:opacity-50 text-text-secondary hover:text-text-primary transition-colors ${pagination.current_page === 1 ? 'cursor-not-allowed' : ''}">
+            <span class="material-symbols-outlined text-sm">chevron_left</span>
         </button>
     `;
 
@@ -152,32 +202,28 @@ function displayPagination(pagination) {
     for (let i = 1; i <= pagination.last_page; i++) {
         if (i === 1 || i === pagination.last_page || 
             (i >= pagination.current_page - 2 && i <= pagination.current_page + 2)) {
+            const isActive = i === pagination.current_page;
             html += `
-                <button class="${i === pagination.current_page ? 'active' : ''}" 
-                        onclick="goToPage(${i})">
+                <button onclick="goToPage(${i})"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg ${isActive ? 'bg-primary text-white shadow-[0_0_10px_rgba(45,212,191,0.15)]' : 'hover:bg-background-light text-text-secondary hover:text-text-primary'} text-sm font-medium transition-colors">
                     ${i}
                 </button>
             `;
         } else if (i === pagination.current_page - 3 || i === pagination.current_page + 3) {
-            html += `<span>...</span>`;
+            html += `<span class="px-2 text-text-secondary">...</span>`;
         }
     }
 
     // Next button
     html += `
         <button ${pagination.current_page === pagination.last_page ? 'disabled' : ''} 
-                onclick="goToPage(${pagination.current_page + 1})">
-            Next
+                onclick="goToPage(${pagination.current_page + 1})"
+                class="p-2 rounded-lg hover:bg-background-light disabled:opacity-50 text-text-secondary hover:text-text-primary transition-colors ${pagination.current_page === pagination.last_page ? 'cursor-not-allowed' : ''}">
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
         </button>
     `;
-
-    // Show page info
-    html += `
-        <span style="margin-left: 1rem; padding: 0.5rem;">
-            Page ${pagination.current_page} of ${pagination.last_page} 
-            (Total: ${pagination.total} items)
-        </span>
-    `;
+    
+    html += `</div>`;
 
     document.getElementById('pagination').innerHTML = html;
 }
@@ -191,6 +237,18 @@ function goToPage(page) {
     loadItems();
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/**
+ * Handle status filter
+ */
+function handleStatusFilter() {
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+        // Store filter value and reload items
+        currentPage = 1;
+        loadItems();
+    }
 }
 
 /**
@@ -218,14 +276,14 @@ function openItemModal() {
     document.getElementById('modalTitle').textContent = 'Add New Item';
     
     // Show modal
-    document.getElementById('itemModal').style.display = 'block';
+    document.getElementById('itemModal').classList.remove('hidden');
 }
 
 /**
  * Close item modal
  */
 function closeItemModal() {
-    document.getElementById('itemModal').style.display = 'none';
+    document.getElementById('itemModal').classList.add('hidden');
     document.getElementById('itemForm').reset();
 }
 
@@ -237,7 +295,7 @@ async function editItem(id) {
     try {
         // Show loading in modal
         document.getElementById('modalTitle').textContent = 'Loading...';
-        document.getElementById('itemModal').style.display = 'block';
+        document.getElementById('itemModal').classList.remove('hidden');
 
         // Make AJAX GET request to fetch item details
         // In MVC mode: use API route directly
@@ -338,10 +396,20 @@ async function deleteItem(id) {
     }
 }
 
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Close modal when clicking outside of it
 window.onclick = function(event) {
     const modal = document.getElementById('itemModal');
-    if (event.target === modal) {
+    if (event.target === modal || event.target.closest('.bg-black\\/50')) {
         closeItemModal();
     }
 }

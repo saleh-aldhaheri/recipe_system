@@ -10,20 +10,18 @@ class NotificationSystem {
     }
 
     init() {
-        // Create notification container if it doesn't exist
-        if (!document.getElementById('notification-container')) {
+        // Use existing container from layout or create one
+        this.container = document.getElementById('notification-container');
+        if (!this.container) {
             this.container = document.createElement('div');
             this.container.id = 'notification-container';
-            this.container.className = 'notification-container';
             document.body.appendChild(this.container);
-        } else {
-            this.container = document.getElementById('notification-container');
         }
     }
 
     /**
      * Show a notification
-     * @param {string} message - Notification message
+     * @param {string|object} message - Notification message or error object
      * @param {string} type - Type: 'success', 'error', 'warning', 'info'
      * @param {number} duration - Auto-close duration in ms (0 = no auto-close)
      */
@@ -32,22 +30,48 @@ class NotificationSystem {
             this.init();
         }
 
+        // Handle error objects - extract message and details
+        let displayMessage = message;
+        if (typeof message === 'object' && message !== null) {
+            if (message.message) {
+                displayMessage = message.message;
+                if (message.error || message.errors) {
+                    const details = message.error || message.errors;
+                    if (typeof details === 'object') {
+                        const detailText = Object.entries(details)
+                            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                            .join('\n');
+                        displayMessage += '\n' + detailText;
+                    } else {
+                        displayMessage += '\n' + details;
+                    }
+                }
+            } else {
+                displayMessage = JSON.stringify(message);
+            }
+        }
+
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         
-        // Icon based on type
+        // Icon based on type - using Material Symbols
         const icons = {
-            success: '✓',
-            error: '✕',
-            warning: '⚠',
-            info: 'ℹ'
+            success: '<span class="material-symbols-outlined" style="font-size: 1rem;">check_circle</span>',
+            error: '<span class="material-symbols-outlined" style="font-size: 1rem;">error</span>',
+            warning: '<span class="material-symbols-outlined" style="font-size: 1rem;">warning</span>',
+            info: '<span class="material-symbols-outlined" style="font-size: 1rem;">info</span>'
         };
+
+        // Escape and format message (preserve line breaks)
+        const escapedMessage = this.escapeHtml(String(displayMessage)).replace(/\n/g, '<br>');
 
         notification.innerHTML = `
             <div class="notification-content">
                 <span class="notification-icon">${icons[type] || icons.info}</span>
-                <span class="notification-message">${this.escapeHtml(message)}</span>
-                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                <span class="notification-message">${escapedMessage}</span>
+                <button class="notification-close" onclick="notifications.remove(this.closest('.notification'))" title="Close">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">close</span>
+                </button>
             </div>
         `;
 
@@ -72,9 +96,10 @@ class NotificationSystem {
      * Remove notification
      */
     remove(notification) {
+        if (!notification) return;
         notification.classList.remove('show');
         setTimeout(() => {
-            if (notification.parentElement) {
+            if (notification && notification.parentElement) {
                 notification.remove();
             }
         }, 300);

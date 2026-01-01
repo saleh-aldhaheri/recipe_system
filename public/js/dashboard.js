@@ -109,7 +109,7 @@ async function loadTableData() {
     const container = document.getElementById('itemsTableContainer');
     const timeFrame = document.querySelector('.table-time-frame')?.value || currentTimeFrame;
     
-    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading items...</p></div>';
+    container.innerHTML = '<div class="flex flex-col items-center justify-center py-12"><div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div><p class="mt-4 text-text-secondary">Loading items...</p></div>';
     
     try {
         const dates = getTimeFrameDates(timeFrame);
@@ -136,37 +136,37 @@ function renderItemsTable(items) {
     const container = document.getElementById('itemsTableContainer');
     
     if (!items || items.length === 0) {
-        container.innerHTML = '<p>No items found</p>';
+        container.innerHTML = '<div class="flex flex-col items-center justify-center py-12"><span class="material-symbols-outlined text-4xl text-text-secondary mb-2">inbox</span><p class="text-text-secondary">No items found</p></div>';
         return;
     }
 
     let html = `
-        <table>
+        <table class="w-full text-left border-collapse">
             <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Short Name</th>
-                    <th>Total Usage</th>
-                    <th>Balance</th>
-                    <th>Unit</th>
-                    <th>Actions</th>
+                <tr class="bg-background-light border-b border-surface-border">
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">#</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Name</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Short Name</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Total Usage</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Balance</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Unit</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-surface-border">
     `;
 
     items.forEach((item, index) => {
         html += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${escapeHtml(item.name)}</td>
-                <td>${escapeHtml(item.short_name)}</td>
-                <td>${formatNumber(item.total)}</td>
-                <td>${formatNumber(item.balance)}</td>
-                <td>${escapeHtml(item.unit)}</td>
-                <td>
-                    <button class="btn btn-small btn-primary" onclick="viewItemRecipes(${item.id}, '${escapeHtml(item.name)}')">
+            <tr class="hover:bg-surface-border/20 transition-colors group">
+                <td class="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">${index + 1}</td>
+                <td class="px-6 py-4 text-sm font-medium text-text-primary whitespace-nowrap">${escapeHtml(item.name)}</td>
+                <td class="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">${escapeHtml(item.short_name)}</td>
+                <td class="px-6 py-4 text-sm text-text-primary whitespace-nowrap font-mono">${formatNumber(item.total)}</td>
+                <td class="px-6 py-4 text-sm text-text-primary whitespace-nowrap font-mono">${formatNumber(item.balance)}</td>
+                <td class="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">${escapeHtml(item.unit)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <button onclick="viewItemRecipes(${item.id}, '${escapeHtml(item.name)}')" class="px-3 py-1.5 rounded-lg bg-primary/20 text-primary hover:bg-primary hover:text-white text-xs font-medium transition-colors">
                         View Recipes
                     </button>
                 </td>
@@ -252,11 +252,11 @@ function renderTransactionsByTypeChart(data) {
             datasets: [{
                 data: [data.recipe_usage || 0, data.update_item || 0],
                 backgroundColor: [
-                    'rgba(16, 185, 129, 0.8)',
-                    'rgba(59, 130, 246, 0.8)'
+                    'rgba(45, 212, 191, 0.8)', // primary teal
+                    'rgba(59, 130, 246, 0.8)'  // blue
                 ],
                 borderColor: [
-                    'rgba(16, 185, 129, 1)',
+                    'rgba(45, 212, 191, 1)',
                     'rgba(59, 130, 246, 1)'
                 ],
                 borderWidth: 2
@@ -267,7 +267,10 @@ function renderTransactionsByTypeChart(data) {
             maintainAspectRatio: true,
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        color: '#94a3b8' // text-secondary
+                    }
                 },
                 title: {
                     display: false
@@ -298,8 +301,8 @@ function renderTopItemsChart(items) {
             datasets: [{
                 label: 'Total Used',
                 data: data,
-                backgroundColor: 'rgba(37, 99, 235, 0.8)',
-                borderColor: 'rgba(37, 99, 235, 1)',
+                backgroundColor: 'rgba(45, 212, 191, 0.8)', // primary teal
+                borderColor: 'rgba(45, 212, 191, 1)',
                 borderWidth: 1
             }]
         },
@@ -308,7 +311,21 @@ function renderTopItemsChart(items) {
             maintainAspectRatio: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#94a3b8' // text-secondary
+                    },
+                    grid: {
+                        color: 'rgba(51, 65, 85, 0.3)' // surface-border
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#94a3b8' // text-secondary
+                    },
+                    grid: {
+                        color: 'rgba(51, 65, 85, 0.3)' // surface-border
+                    }
                 }
             },
             plugins: {
@@ -344,8 +361,8 @@ function renderDailyTrendChart(dailyData) {
             datasets: [{
                 label: 'Daily Usage',
                 data: data,
-                borderColor: 'rgba(16, 185, 129, 1)',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderColor: 'rgba(45, 212, 191, 1)', // primary teal
+                backgroundColor: 'rgba(45, 212, 191, 0.1)',
                 borderWidth: 2,
                 fill: true,
                 tension: 0.4
@@ -356,7 +373,21 @@ function renderDailyTrendChart(dailyData) {
             maintainAspectRatio: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#94a3b8' // text-secondary
+                    },
+                    grid: {
+                        color: 'rgba(51, 65, 85, 0.3)' // surface-border
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#94a3b8' // text-secondary
+                    },
+                    grid: {
+                        color: 'rgba(51, 65, 85, 0.3)' // surface-border
+                    }
                 }
             },
             plugins: {
@@ -389,8 +420,8 @@ function renderUsageByRecipesChart(recipes) {
             datasets: [{
                 label: 'Total Used',
                 data: data,
-                backgroundColor: 'rgba(245, 158, 11, 0.8)',
-                borderColor: 'rgba(245, 158, 11, 1)',
+                backgroundColor: 'rgba(45, 212, 191, 0.8)', // primary teal
+                borderColor: 'rgba(45, 212, 191, 1)',
                 borderWidth: 1
             }]
         },
@@ -399,7 +430,21 @@ function renderUsageByRecipesChart(recipes) {
             maintainAspectRatio: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#94a3b8' // text-secondary
+                    },
+                    grid: {
+                        color: 'rgba(51, 65, 85, 0.3)' // surface-border
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#94a3b8' // text-secondary
+                    },
+                    grid: {
+                        color: 'rgba(51, 65, 85, 0.3)' // surface-border
+                    }
                 }
             },
             plugins: {
@@ -420,8 +465,8 @@ async function viewItemRecipes(itemId, itemName) {
     const modalBody = document.getElementById('recipesModalBody');
     
     modalTitle.textContent = `Recipes for: ${itemName}`;
-    modalBody.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading recipes...</p></div>';
-    modal.style.display = 'block';
+    modalBody.innerHTML = '<div class="flex flex-col items-center justify-center py-12"><div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div><p class="mt-4 text-text-secondary">Loading recipes...</p></div>';
+    modal.classList.remove('hidden');
     
     try {
         const dates = getTimeFrameDates(currentTimeFrame);
@@ -453,17 +498,16 @@ function renderRecipesList(recipes) {
     }
     
     let html = `
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Recipe Name</th>
-                        <th>Recipe Date</th>
-                        <th>Total Used</th>
-                        <th>Last Used</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-background-light border-b border-surface-border">
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Recipe Name</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Recipe Date</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Total Used</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap">Last Used</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-border">
     `;
     
     recipes.forEach(recipe => {
@@ -471,19 +515,18 @@ function renderRecipesList(recipes) {
         const lastUsed = recipe.last_used ? new Date(recipe.last_used).toLocaleString() : '-';
         
         html += `
-            <tr>
-                <td>${escapeHtml(recipe.recipe_name)}</td>
-                <td>${recipeDate}</td>
-                <td>${formatNumber(recipe.total_used)}</td>
-                <td>${lastUsed}</td>
+            <tr class="hover:bg-surface-border/20 transition-colors">
+                <td class="px-6 py-4 text-sm font-medium text-text-primary whitespace-nowrap">${escapeHtml(recipe.recipe_name)}</td>
+                <td class="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">${recipeDate}</td>
+                <td class="px-6 py-4 text-sm text-text-primary whitespace-nowrap font-mono">${formatNumber(recipe.total_used)}</td>
+                <td class="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">${lastUsed}</td>
             </tr>
         `;
     });
     
     html += `
-                </tbody>
-            </table>
-        </div>
+            </tbody>
+        </table>
     `;
     
     modalBody.innerHTML = html;
@@ -494,7 +537,7 @@ function renderRecipesList(recipes) {
  */
 function closeRecipesModal() {
     const modal = document.getElementById('recipesModal');
-    modal.style.display = 'none';
+    modal.classList.add('hidden');
 }
 
 /**
@@ -502,7 +545,7 @@ function closeRecipesModal() {
  */
 window.onclick = function(event) {
     const modal = document.getElementById('recipesModal');
-    if (event.target === modal) {
+    if (event.target === modal || event.target.closest('.bg-black\\/50')) {
         closeRecipesModal();
     }
 }

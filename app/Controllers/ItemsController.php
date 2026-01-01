@@ -22,6 +22,7 @@ class ItemsController extends BaseController
         $page = (int) ($queryParams['page'] ?? 1);
         $perPage = (int) ($queryParams['per_page'] ?? 10);
         $search = $queryParams['search'] ?? '';
+        $status = $queryParams['status'] ?? '';
 
         $query = Item::query();
 
@@ -30,6 +31,13 @@ class ItemsController extends BaseController
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('short_name', 'like', "%{$search}%");
             });
+        }
+        
+        // Filter by status (in_stock = balance > 0, out_of_stock = balance = 0)
+        if ($status === 'in_stock') {
+            $query->where('balance', '>', 0);
+        } elseif ($status === 'out_of_stock') {
+            $query->where('balance', '=', 0);
         }
 
         $items = $this->Paginate($query, $page, $perPage, 'name');

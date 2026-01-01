@@ -156,17 +156,15 @@ function renderCalendar() {
         const dateString = dayDate.toISOString().split('T')[0];
         
         const dayElement = document.createElement('div');
-        dayElement.className = 'calendar-day';
-        
-        // Add today class
         const today = new Date();
-        if (dayDate.toDateString() === today.toDateString()) {
-            dayElement.classList.add('today');
-        }
+        const isToday = dayDate.toDateString() === today.toDateString();
         
-        // Click handler - use event delegation approach
+        // Apply Tailwind classes
+        const isLastInRow = i === 6; // Saturday (last column)
+        dayElement.className = `p-3 ${isLastInRow ? '' : 'border-r'} border-b border-surface-border hover:bg-background-light transition-colors cursor-pointer min-h-[120px] ${isToday ? 'bg-primary/10 border-primary/50' : 'bg-white'}`;
+        
+        // Click handler
         dayElement.setAttribute('data-date', dateString);
-        dayElement.style.cursor = 'pointer';
         dayElement.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -175,15 +173,15 @@ function renderCalendar() {
         });
 
         const dayHeader = document.createElement('div');
-        dayHeader.className = 'calendar-day-header';
+        dayHeader.className = 'flex flex-col items-center mb-2';
         dayHeader.innerHTML = `
-            <div class="day-name">${dayNames[i]}</div>
-            <div class="day-number">${dayDate.getDate()}</div>
+            <div class="text-xs font-semibold text-text-secondary uppercase mb-1">${dayNames[i]}</div>
+            <div class="text-lg font-bold ${isToday ? 'text-primary' : 'text-white'}">${dayDate.getDate()}</div>
         `;
         dayElement.appendChild(dayHeader);
 
         const recipesContainer = document.createElement('div');
-        recipesContainer.className = 'calendar-day-recipes';
+        recipesContainer.className = 'space-y-1 mt-2';
         recipesContainer.id = `recipes-${dateString}`;
         dayElement.appendChild(recipesContainer);
 
@@ -237,19 +235,12 @@ function updateCalendarRecipes() {
         if (dayRecipes.length > 0) {
             dayRecipes.forEach(recipe => {
                 const recipeBadge = document.createElement('div');
-                recipeBadge.className = 'recipe-badge';
+                recipeBadge.className = 'px-2 py-1 rounded text-xs font-medium bg-primary/20 text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer truncate';
                 
-                // Truncate recipe name if too long (max 25 characters)
-                const maxLength = 25;
-                const displayName = recipe.name.length > maxLength 
-                    ? recipe.name.substring(0, maxLength) + '...' 
-                    : recipe.name;
-                
-                recipeBadge.textContent = displayName;
+                recipeBadge.textContent = recipe.name;
                 recipeBadge.title = recipe.name; // Full name in tooltip
                 recipeBadge.setAttribute('data-recipe-id', recipe.id);
                 recipeBadge.setAttribute('data-recipe-date', dateString);
-                recipeBadge.style.cursor = 'pointer';
                 recipeBadge.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -577,8 +568,8 @@ async function addIngredientRow() {
         const rowId = `ingredient-${ingredientCounter++}`;
 
         let html = `
-            <div class="ingredient-item" id="${rowId}">
-                <select class="ingredient-item-select" id="ingredient-select-${rowId}" required>
+            <div class="ingredient-item flex gap-3 mb-3" id="${rowId}">
+                <select class="ingredient-item-select flex-1 px-4 py-2.5 border border-surface-border rounded-lg bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm [&>option]:bg-white [&>option]:text-text-primary" id="ingredient-select-${rowId}" required>
                     <option value="">Select Item</option>
         `;
 
@@ -588,8 +579,8 @@ async function addIngredientRow() {
 
         html += `
                 </select>
-                <input type="number" class="ingredient-quantity" step="0.001" min="0" placeholder="Quantity" required>
-                <button type="button" class="btn btn-danger btn-small" onclick="removeIngredientRow('${rowId}')">Remove</button>
+                <input type="number" class="ingredient-quantity flex-1 px-4 py-2.5 border border-surface-border rounded-lg bg-white text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm" step="0.001" min="0" placeholder="Quantity" required>
+                <button type="button" class="px-4 py-2.5 rounded-lg bg-danger hover:bg-red-600 text-white text-sm font-medium transition-colors shadow-sm" onclick="removeIngredientRow('${rowId}')">Remove</button>
             </div>
         `;
 
@@ -706,9 +697,9 @@ async function editRecipe(id, recipeDate = null) {
                     const rowId = `ingredient-${ingredientCounter++}`;
                     const selectId = `ingredient-select-${rowId}`;
                     let html = `
-                        <div class="ingredient-item" id="${rowId}">
-                            <select class="ingredient-item-select" id="${selectId}" required>
-                                <option value="">Select Item</option>
+                        <div class="ingredient-item flex gap-3 mb-3" id="${rowId}">
+                            <select class="ingredient-item-select flex-1 px-4 py-2.5 border border-surface-border rounded-lg bg-surface-dark text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all [&>option]:bg-surface-dark [&>option]:text-white" id="${selectId}" required>
+                                <option value="" class="bg-surface-dark text-white">Select Item</option>
                     `;
 
                     items.forEach(item => {
@@ -718,8 +709,8 @@ async function editRecipe(id, recipeDate = null) {
 
                     html += `
                             </select>
-                            <input type="number" class="ingredient-quantity" step="0.001" min="0" value="${ingredient.quantity}" placeholder="Quantity" required>
-                            <button type="button" class="btn btn-danger btn-small" onclick="removeIngredientRow('${rowId}')">Remove</button>
+                <input type="number" class="ingredient-quantity flex-1 px-4 py-2.5 border border-surface-border rounded-lg bg-white text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm" step="0.001" min="0" value="${ingredient.quantity}" placeholder="Quantity" required>
+                <button type="button" class="px-4 py-2.5 rounded-lg bg-danger hover:bg-red-600 text-white text-sm font-medium transition-colors shadow-sm" onclick="removeIngredientRow('${rowId}')">Remove</button>
                         </div>
                     `;
 
