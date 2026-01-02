@@ -4,6 +4,8 @@ services:
   php-app_dev:
     build: .
     container_name: Recipe_Management_dev
+    environment:
+      - APP_ENV=dev
     env_file:
       - .env.dev
     volumes:

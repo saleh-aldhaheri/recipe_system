@@ -12,9 +12,29 @@ use Symfony\Component\Dotenv\Dotenv;
 
 require_once Core.'helper.php';
 
-if (file_exists(BASE.'.env')) {
+$envFile = null;
+$appEnv = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? null;
+
+if ($appEnv) {
+
+    $envFile = BASE.'.env.'.$appEnv;
+    if (!file_exists($envFile)) {
+        $envFile = BASE.'.env'; 
+    }
+} else {
+
+    if (file_exists(BASE.'.env.dev')) {
+        $envFile = BASE.'.env.dev';
+    } elseif (file_exists(BASE.'.env.prod')) {
+        $envFile = BASE.'.env.prod';
+    } elseif (file_exists(BASE.'.env')) {
+        $envFile = BASE.'.env';
+    }
+}
+
+if ($envFile && file_exists($envFile)) {
     $envInstance = new Dotenv;
-    $envInstance->load(BASE.'.env');
+    $envInstance->load($envFile);
 }
 
 $container = new Container;

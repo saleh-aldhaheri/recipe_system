@@ -8,6 +8,8 @@ services:
       dockerfile: Dockerfile
     image: ghcr.io/salehnevergiveup/recipe_management_pro:latest
     container_name: Recipe_Management_pro
+    environment:
+      - APP_ENV=prod
     env_file:
       - .env.prod
     networks:
