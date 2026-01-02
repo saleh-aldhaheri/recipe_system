@@ -9,8 +9,8 @@ services:
     env_file:
       - .env.dev
     volumes:
-      - .:/www/var/htm 
-      - ./vendor:/www/var/htm/vendor
+      - .:/www/var 
+      - ./vendor:/www/var/vendor
       - ./docker/php-fpm-www.conf:/usr/local/etc/php-fpm.d/www.conf
     networks:
       - app-network_dev
