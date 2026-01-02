@@ -1,7 +1,11 @@
 version: '3.9'
 
 services:
+
   php-app:
+    build:  
+      context: .  
+      dockerfile: Dockerfile
     image: ghcr.io/salehnevergiveup/recipe_management_pro:latest
     container_name: Recipe_Management_pro
     env_file:
@@ -17,13 +21,12 @@ services:
     container_name: nginx_pro
     ports:
       - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     networks:
       - app-network_pro
     depends_on:
       - php-app
-    # You might need volumes here if Nginx needs access to app files
-    # volumes:
-    #   - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
 
   db_pro:
     image: mysql:8.0
