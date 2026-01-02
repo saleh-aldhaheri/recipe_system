@@ -59,7 +59,7 @@ git clone https://github.com/salehnevergiveup/recipe_system.git
 cd recipe_system
 docker compose -p Recipe up -d
 ```
-## if you want to run in the localhost witout docker
+## if you want to run in the localhost without docker
 ### Step 1: Clone the Repository and run the docker compose
 ```bash
 git clone https://github.com/salehnevergiveup/recipe_system.git
