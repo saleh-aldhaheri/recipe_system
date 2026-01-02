@@ -21,8 +21,6 @@ RUN composer install \
     --no-scripts \
     --optimize-autoloader
 
-COPY docker/php-fpm-www.conf /usr/local/etc/php-fpm.d/www.conf
-
 COPY . .
 
 EXPOSE 9000
