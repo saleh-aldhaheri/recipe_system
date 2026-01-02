@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
 
-  php-app:
+  php-app_pro:
     build:  
       context: .  
       dockerfile: Dockerfile
@@ -26,7 +26,7 @@ services:
     networks:
       - app-network_pro
     depends_on:
-      - php-app
+      - php-app_pro
 
   db_pro:
     image: mysql:8.0
