@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql mbstring zip opcache gd \
     && pecl install redis \
-    && docker-php-ext-enable redis
+    && docker-php-ext-enable redis \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -13,8 +14,10 @@ WORKDIR /www/var
 
 COPY composer.json composer.lock ./
 
-RUN composer install --optimize-autoloader
+RUN composer install --optimize-autoloader --no-dev --no-interaction
 
-EXPOSE 9001
+COPY . .
+
+EXPOSE 9000
 
 CMD ["php-fpm"]
