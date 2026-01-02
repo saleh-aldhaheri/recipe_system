@@ -51,10 +51,19 @@ The Recipe Management System is designed to help organizations efficiently manag
 - MySQL/MariaDB
 - Web server (Apache/Nginx) or PHP built-in server
 
-### Step 1: Clone the Repository
+### if you want to run the application with docker
+
+### Step 1: Clone the Repository and run the docker compose
 ```bash
-git clone <repository-url>
-cd xlsx
+git clone https://github.com/salehnevergiveup/recipe_system.git
+cd recipe_system
+docker compose -p Recipe up -d
+```
+## if you want to run in the localhost witout docker
+### Step 1: Clone the Repository and run the docker compose
+```bash
+git clone https://github.com/salehnevergiveup/recipe_system.git
+cd recipe_system
 ```
 
 ### Step 2: Install Dependencies
