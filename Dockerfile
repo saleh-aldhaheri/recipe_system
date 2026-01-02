@@ -15,6 +15,6 @@ COPY composer.json composer.lock ./
 
 RUN composer install --optimize-autoloader
 
-EXPOSE 9000
+EXPOSE 9001
 
 CMD ["php-fpm"]
