@@ -1,7 +1,6 @@
 #docker compose
 Dockerfile
 .dockerignore
-docker-compose*.yaml
 
 # Environment files
 .env*
