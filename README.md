@@ -322,5 +322,5 @@ For support and inquiries, please contact the project maintainer.
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: 2024
+**Last Updated**: 2026
 
