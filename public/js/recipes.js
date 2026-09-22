@@ -110,6 +110,16 @@ function getSunday(date) {
 }
 
 /**
+ * Format a date as YYYY-MM-DD in local time (for date inputs)
+ */
+function toLocalDateString(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/**
  * Render weekly calendar
  */
 function renderCalendar() {
@@ -138,6 +148,12 @@ function renderCalendar() {
     }
     
     document.getElementById('currentMonthYear').textContent = weekText;
+
+    // Reflect current week start in the date input
+    const weekInput = document.getElementById('weekDateInput');
+    if (weekInput) {
+        weekInput.value = toLocalDateString(weekStart);
+    }
 
     // Clear calendar
     const calendar = document.getElementById('calendar');
@@ -269,6 +285,25 @@ function previousWeek() {
 function nextWeek() {
     currentWeekStart = new Date(currentWeekStart);
     currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    renderCalendar();
+    loadRecipes();
+}
+
+/**
+ * Jump to the week containing the date typed/picked in the date input
+ */
+function goToDate() {
+    const input = document.getElementById('weekDateInput');
+    if (!input || !input.value) {
+        return;
+    }
+
+    const date = new Date(input.value + 'T00:00:00');
+    if (isNaN(date.getTime())) {
+        return;
+    }
+
+    currentWeekStart = getSunday(date);
     renderCalendar();
     loadRecipes();
 }

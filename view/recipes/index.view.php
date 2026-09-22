@@ -21,6 +21,7 @@
                 <span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
                 <span class="text-sm font-bold text-text-primary" id="currentMonthYear">Loading...</span>
             </div>
+            <input type="date" id="weekDateInput" onchange="goToDate()" class="text-sm font-medium text-text-primary bg-white border border-surface-border rounded-md px-2 py-1 mx-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" title="Type or pick a date to jump to its week">
             <button onclick="nextWeek()" class="p-2 hover:bg-background-light hover:text-primary rounded-md text-text-secondary transition-colors">
                 <span class="material-symbols-outlined text-sm">chevron_right</span>
             </button>
