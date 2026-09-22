@@ -21,6 +21,7 @@
                 <span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
                 <span class="text-sm font-bold text-text-primary" id="currentMonthYear">Loading...</span>
             </div>
+            <input type="date" id="weekDateInput" onchange="goToDate()" class="text-sm font-medium text-text-primary bg-white border border-surface-border rounded-md px-2 py-1 mx-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" title="Type or pick a date to jump to its week">
             <button onclick="nextWeek()" class="p-2 hover:bg-background-light hover:text-primary rounded-md text-text-secondary transition-colors">
                 <span class="material-symbols-outlined text-sm">chevron_right</span>
             </button>
@@ -146,14 +147,14 @@
 
                 <div id="fileList" class="mb-5 space-y-2"></div>
 
-                <div id="importProgress" class="hidden mb-5">
-                    <div class="flex flex-col items-center justify-center py-8">
-                        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+                <div id="importProgress" class="hidden mb-5 overflow-auto">
+                    <div class="flex flex-col items-center justify-center py-8 overflow-auto">
+                        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent overflow-auto"></div>
                         <p class="mt-4 text-text-secondary">Importing files...</p>
                     </div>
                 </div>
 
-                <div id="importResults" class="hidden mb-5"></div>
+                <div id="importResults" class="hidden mb-5 overflow-x-auto"></div>
 
                 <div class="flex gap-3 justify-end pt-4 border-t border-surface-border">
                     <button type="button" onclick="closeImportModal()" class="px-5 py-2.5 rounded-lg border border-surface-border bg-white text-text-secondary hover:bg-background-light hover:text-text-primary transition-all text-sm font-medium shadow-sm">

@@ -3,6 +3,7 @@
 use App\Controllers\DashboardController;
 use App\Controllers\IngredientsController;
 use App\Controllers\ItemsController;
+use App\Controllers\WelcomeController;
 use App\Controllers\RecipesController;
 use App\Controllers\TransactionsController;
 use App\Middleware\ImportMiddleware;
@@ -68,3 +69,6 @@ $app->group('/dashboard', function (RouteCollectorProxy $group) {
 
     $group->post('/item/{id}/recipes', [DashboardController::class, 'getItemRecipes']);
 });
+
+
+$app->get('/welcome', [WelcomeController::class, 'welcome']);

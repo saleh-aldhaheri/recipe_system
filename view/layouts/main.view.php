@@ -17,6 +17,9 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css" rel="stylesheet">
+    
     <!-- Tailwind Config -->
     <script id="tailwind-config">
         tailwind.config = {
@@ -103,109 +106,37 @@
         .choices__input::placeholder {
             color: #6C757D !important;
         }
-        /* Notification System Styles */
-        #notification-container {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            max-width: 24rem;
-            pointer-events: none;
+        /* Fix Choices.js width inside ingredient rows (prevent letter-by-letter wrapping) */
+        .ingredient-item .choices {
+            flex: 1 1 0%;
+            min-width: 0;
         }
-        .notification {
-            position: relative;
-            background: white;
+        .ingredient-item .choices__inner {
+            min-height: 2.625rem;
             border-radius: 0.5rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border: 1px solid #DEE2E6;
-            padding: 0;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease-in-out;
-            pointer-events: auto;
-            overflow: hidden;
+            padding: 0.625rem 1rem;
         }
-        .notification.show {
-            opacity: 1;
-            transform: translateX(0);
+        .ingredient-item .choices__list--dropdown .choices__item {
+            white-space: normal;
+            word-break: break-word;
         }
-        .notification-content {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 1rem 1.25rem;
+        /* Toaster-Ui Notifications */
+        .toaster-ui-lib {
+            border-radius: 8px;
+            font-family: "Inter", sans-serif;
         }
-        .notification-icon {
-            flex-shrink: 0;
-            width: 1.5rem;
-            height: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-weight: bold;
-            font-size: 0.875rem;
+        .toaster-ui-lib-success {
+            background-color: #28A745 !important;
         }
-        .notification-success .notification-icon {
-            background-color: #28A745;
-            color: white;
+        .toaster-ui-lib-error {
+            background-color: #DC3545 !important;
         }
-        .notification-error .notification-icon {
-            background-color: #DC3545;
-            color: white;
+        .toaster-ui-lib-warning {
+            background-color: #FFC107 !important;
+            color: #343A40 !important;
         }
-        .notification-warning .notification-icon {
-            background-color: #FFC107;
-            color: #343A40;
-        }
-        .notification-info .notification-icon {
-            background-color: #2b6cee;
-            color: white;
-        }
-        .notification-message {
-            flex: 1;
-            color: #343A40;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            max-width: 20rem;
-        }
-        .notification-close {
-            flex-shrink: 0;
-            background: none;
-            border: none;
-            color: #6C757D;
-            font-size: 1.25rem;
-            line-height: 1;
-            cursor: pointer;
-            padding: 0;
-            width: 1.25rem;
-            height: 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.25rem;
-            transition: all 0.2s;
-        }
-        .notification-close:hover {
-            background-color: #F8F9FA;
-            color: #343A40;
-        }
-        .notification-success {
-            border-left: 4px solid #28A745;
-        }
-        .notification-error {
-            border-left: 4px solid #DC3545;
-        }
-        .notification-warning {
-            border-left: 4px solid #FFC107;
-        }
-        .notification-info {
-            border-left: 4px solid #2b6cee;
+        .toaster-ui-lib-info {
+            background-color: #2b6cee !important;
         }
         /* Sidebar Collapse Styles */
         #sidebar.collapsed {
@@ -332,9 +263,6 @@
         </aside>
     </div>
     
-    <!-- Notifications Container -->
-    <div id="notification-container"></div>
-    
     <!-- JavaScript -->
     <script>
         // Mobile menu toggle
@@ -364,10 +292,12 @@
             });
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/toaster-ui@1.1.5/dist/main.js"></script>
     <script src="<?= asset('js/api.js') ?>"></script>
-    <script src="<?= asset('js/notifications.js') ?>"></script>
-    <script src="<?= asset('js/confirm-dialog.js') ?>"></script>
+    <script src="<?= asset('js/notifications.js') ?>?v=<?= filemtime(BASE.'public/js/notifications.js') ?>"></script>
+    <script src="<?= asset('js/confirm-dialog.js') ?>?v=<?= filemtime(BASE.'public/js/confirm-dialog.js') ?>"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <?= isset($scripts) ? $scripts : '' ?>
+
 </body>
 </html>

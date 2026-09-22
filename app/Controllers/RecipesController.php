@@ -28,7 +28,7 @@ class RecipesController extends BaseController
         $perPage = (int) ($queryParams['per_page'] ?? 10);
         $search = $queryParams['search'] ?? '';
 
-        $query = Recipe::query();
+        $query = Recipe::with('ingredients.item');
 
         if (! empty($search)) {
             $query->where('name', 'like', "%{$search}%");
@@ -51,7 +51,7 @@ class RecipesController extends BaseController
             'recipes' => $recipes['data'],
             'pagination' => $recipes['pagination'],
             'search' => $search,
-            'scripts' => '<script src="'.asset('js/recipes.js').'"></script>',
+            'scripts' => '<script src="'.asset('js/recipes.js').'?v='.filemtime(BASE.'public/js/recipes.js').'"></script>',
         ]);
 
         $response->getBody()->write($html);

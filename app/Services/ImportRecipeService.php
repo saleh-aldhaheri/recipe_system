@@ -283,7 +283,7 @@ class ImportRecipeService
                     $qtyPositions = [];
 
                     foreach ($dataArray[$i] as $key => $value) {
-                        $value = trim($value);
+                        $value = trim((string) $value);
                         if ($value == 'ITEM') {
                             $itemPositions[] = $key;
                         } elseif ($value == 'BATCH NUMBER') {
@@ -363,7 +363,7 @@ class ImportRecipeService
 
             $date = '';
             foreach ($getDateRow as $item) {
-                $item = trim($item);
+                $item = trim((string) $item);
                 if (! empty($item)) {
                     $date = preg_replace('/^DATE:\s*/i', '', $item);
                     if (! empty($date)) {
@@ -375,7 +375,7 @@ class ImportRecipeService
 
             $product = '';
             foreach ($getProduceRow as $item) {
-                $item = trim($item);
+                $item = trim((string) $item);
                 if (! empty($item)) {
                     $product = preg_replace('/^PRODUCT:\s*/i', '', $item);
                     if (! empty($product)) {
