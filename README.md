@@ -57,7 +57,7 @@ The Recipe Management System is designed to help organizations efficiently manag
 ```bash
 git clone https://github.com/salehnevergiveup/recipe_system.git
 cd recipe_system
-docker compose -p Recipe up -d
+docker compose up -d
 ```
 ## if you want to run in the localhost without docker
 ### Step 1: Clone the Repository and run the docker compose
@@ -98,7 +98,7 @@ mysql -u your_username -p your_database_name < schema.sql
 ### Step 5: Start the Server
 Using PHP built-in server:
 ```bash
-php -S localhost:8881 -t public
+php -S localhost:8080 -t public
 ```
 
 Or configure your web server to point to the `public` directory.
