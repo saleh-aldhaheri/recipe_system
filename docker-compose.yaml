@@ -6,7 +6,7 @@ services:
     build:  
       context: .  
       dockerfile: Dockerfile
-    image: alehaldhaheri1010/recipe:latest
+    image: salehaldhaheri1010/recipe:latest
     container_name: Recipe_Management_pro
     environment:
       - APP_ENV=prod
