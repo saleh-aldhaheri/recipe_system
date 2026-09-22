@@ -106,6 +106,20 @@
         .choices__input::placeholder {
             color: #6C757D !important;
         }
+        /* Fix Choices.js width inside ingredient rows (prevent letter-by-letter wrapping) */
+        .ingredient-item .choices {
+            flex: 1 1 0%;
+            min-width: 0;
+        }
+        .ingredient-item .choices__inner {
+            min-height: 2.625rem;
+            border-radius: 0.5rem;
+            padding: 0.625rem 1rem;
+        }
+        .ingredient-item .choices__list--dropdown .choices__item {
+            white-space: normal;
+            word-break: break-word;
+        }
         /* Toaster-Ui Notifications */
         .toaster-ui-lib {
             border-radius: 8px;

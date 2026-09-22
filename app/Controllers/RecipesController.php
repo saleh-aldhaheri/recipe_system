@@ -28,7 +28,7 @@ class RecipesController extends BaseController
         $perPage = (int) ($queryParams['per_page'] ?? 10);
         $search = $queryParams['search'] ?? '';
 
-        $query = Recipe::query();
+        $query = Recipe::with('ingredients.item');
 
         if (! empty($search)) {
             $query->where('name', 'like', "%{$search}%");
